@@ -1,4 +1,4 @@
-Official implementation of the paper "Biologically-Constrained Multi-Label Classification with Learnable Domain Knowledge".
+# Biologically-Constrained Multi-Label Classification with Learnable Domain Knowledge
 
 ## Overview
 
