@@ -1,0 +1,94 @@
+# Configuration file for GR-Neutro dataset
+
+dataset:
+  name: gr_neutro
+  root_dir: path/to/gr_neutro_dataset
+  class_names:
+    - Normal
+    - Chromatin
+    - Dohle
+    - Hypergranulation
+    - Hypersegmentation
+    - Hypogranulation
+    - Hyposegmentation
+  transform:
+    train:
+      - type: RandomResizedCrop
+        size: 224
+        scale: [0.8, 1.0]
+      - type: RandomHorizontalFlip
+        p: 0.5
+      - type: RandomVerticalFlip
+        p: 0.5
+      - type: ColorJitter
+        brightness: 0.1
+        contrast: 0.1
+        saturation: 0.1
+        hue: 0.05
+      - type: RandomRotation
+        degrees: 10
+      - type: ToTensor
+      - type: Normalize
+        mean: [0.485, 0.456, 0.406]
+        std: [0.229, 0.224, 0.225]
+    val:
+      - type: Resize
+        size: 256
+      - type: CenterCrop
+        size: 224
+      - type: ToTensor
+      - type: Normalize
+        mean: [0.485, 0.456, 0.406]
+        std: [0.229, 0.224, 0.225]
+    test:
+      - type: Resize
+        size: 256
+      - type: CenterCrop
+        size: 224
+      - type: ToTensor
+      - type: Normalize
+        mean: [0.485, 0.456, 0.406]
+        std: [0.229, 0.224, 0.225]
+
+model:
+  backbone: dinobloom-l  # Options: dinobloom-s, dinobloom-b, dinobloom-l
+  num_classes: 7
+  dropout_rate: 0.5
+  base_threshold: 0.5
+
+training:
+  batch_size: 32
+  epochs: 50
+  backbone_lr: 1e-5
+  constraint_lr: 1e-4
+  classifier_lr: 1e-4
+  threshold_lr: 5e-5
+  weight_decay: 0.01
+  
+  # Early stopping parameters
+  early_stopping_patience: 10  # Stop training if no improvement for this many epochs
+  early_stopping_metric: 'f1_weighted'  # Metric to monitor for early stopping
+  
+  # Backbone freezing/unfreezing options
+  freeze_backbone: false  # Set to false to enable backbone fine-tuning
+  unfreeze_layers: ['blocks', 'norm']  # Options: 'blocks', 'patch_embed', 'norm'
+  unfreeze_last_n_blocks: 2  # Number of last transformer blocks to unfreeze
+  # unfreeze_block_indices: [9, 10, 11]  # Specific block indices to unfreeze
+  
+  # Learning rate scheduler config
+  scheduler:
+    type: cosine
+    min_lr: 1e-6
+  
+  # Checkpoint and visualization intervals
+  checkpoint_interval: 5
+  visualization_interval: 10
+  
+  # Loss function hyperparameters
+  loss:
+    lambda_con: 0.1
+    lambda_unc: 0.1
+    lambda_entropy: 0.01
+    alpha: 0.01
+    beta: 0.1
+    uncertainty_threshold: 0.2
