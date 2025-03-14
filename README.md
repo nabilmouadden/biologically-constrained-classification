@@ -9,34 +9,6 @@ The main components include:
 2. Learnable constraint matrix generation
 3. Adaptive thresholding mechanism with uncertainty estimation
 
-## Repository Structure
-
-```
-├── README.md                     # Repository documentation
-├── requirements.txt              # Required Python packages
-├── src/                          # Source code
-│   ├── __init__.py
-│   ├── model/                    # Model architecture files
-│   │   ├── __init__.py
-│   │   ├── constraint_module.py  # Core constraint module implementation
-│   │   ├── adaptive_threshold.py # Adaptive thresholding component
-│   │   ├── constraint_priors.py  # Prior constraint matrices for datasets
-│   │   └── losses.py             # Loss functions implementation
-│   ├── utils/                    # Utility functions
-│   │   ├── __init__.py
-│   │   ├── visualization.py      # For constraint matrix visualization
-│   │   └── uncertainty.py        # Uncertainty estimation utilities
-│   └── data/                     # Data loading and processing
-│       ├── __init__.py
-│       └── datasets.py           # Dataset implementations
-├── examples/                     # Example usage scripts
-│   ├── train.py                  # Training script
-│   ├── inference.py              # Inference script
-│   └── generate_constraints.py   # Script to generate constraint matrices
-└── configs/                      # Configuration files
-    └── example_dataset.yaml      # Example dataset config
-```
-
 ## Installation
 
 ```bash
