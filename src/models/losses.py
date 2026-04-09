@@ -166,10 +166,17 @@ class ConstraintLoss(nn.Module):
                            (1 - R_normalized) * torch.log(1 - R_normalized + EPS))
         
         # Sum entropy over matrix dimensions (K,K), normalize by K^2, and average over batch
-        # Paper Section 3.3: L_entropy = -1/K^2 * sum_i sum_j [...]
+        #
+        # NOTE on sign convention: The paper formula
+        #   L_entropy = -1/K² Σ [R'logR' + (1-R')log(1-R')]
+        # evaluates to the average binary entropy (≥ 0). Adding this with positive λ
+        # and minimizing total loss would minimize entropy — contradicting the paper's
+        # stated goal: "maximizing the binary entropy of each matrix element, allowing
+        # flexibility in relationship learning" (Section 3.3).
+        #
+        # We therefore return NEGATIVE average entropy so that minimizing total loss
+        # maximizes entropy, matching the paper's intent.
         K = R.shape[1]
         batch_entropy = element_entropy.sum(dim=(1, 2)).mean() / (K * K)
-        
-        # Return negative entropy as the loss (to maximize entropy)
-        # We want to minimize the loss, so negative entropy maximizes entropy
+
         return -batch_entropy

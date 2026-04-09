@@ -85,31 +85,26 @@ def get_aml_matek_constraints():
     C = np.zeros((num_classes, num_classes))
     
     # Define mutual exclusivity and co-occurrence relationships
-    
-    # Sequential maturation stages have positive co-occurrence
+
+    # Sequential maturation stages: adjacent stages co-occur (0.3)
     # Myeloblast → Promyelocyte → Myelocyte → Metamyelocyte → Band → Segmented
     C[0, 1] = C[1, 0] = 0.3  # Myeloblast and Promyelocyte
     C[1, 2] = C[2, 1] = 0.3  # Promyelocyte and Myelocyte
     C[2, 3] = C[3, 2] = 0.3  # Myelocyte and Metamyelocyte
     C[3, 4] = C[4, 3] = 0.3  # Metamyelocyte and Band
     C[4, 5] = C[5, 4] = 0.3  # Band and Segmented
-    
-    # Mutual exclusivity between distinct lineages
-    # Myeloid cells
+
+    # Non-adjacent myeloid stages are mutually exclusive (Paper Table 4)
+    for i in range(6):
+        for j in range(6):
+            if abs(i - j) >= 2:
+                C[i, j] = -1
+
+    # Myeloid cells vs lymphoid lineage: mutually exclusive
     for i in range(6):  # Myeloblast to Segmented Neutrophil
-        # Cannot co-exist with lymphoid/other lineages
         C[i, 9] = C[9, i] = -1  # with Lymphocyte
         C[i, 10] = C[10, i] = -1  # with Plasma Cell
-        
-        # Later myeloid stages cannot co-exist with early ones (skip adjacents)
-        if i >= 3:  # Metamyelocyte onward
-            C[i, 0] = C[0, i] = -1  # Cannot be Myeloblast
-        if i >= 4:  # Band onward
-            C[i, 1] = C[1, i] = -1  # Cannot be Promyelocyte
-        if i >= 5:  # Segmented onward
-            C[i, 2] = C[2, i] = -1  # Cannot be Myelocyte
-            C[i, 3] = C[3, i] = -1  # Cannot be Metamyelocyte
-    
+
     # Eosinophil relationships
     C[6, 0] = C[0, 6] = -1  # Eosinophil and Myeloblast
     C[6, 1] = C[1, 6] = 0.2  # Eosinophil and Promyelocyte
@@ -164,32 +159,43 @@ def get_bmc_constraints():
     C = np.zeros((num_classes, num_classes))
     
     # Define mutual exclusivity and co-occurrence relationships
-    
-    # Sequential maturation stages have positive co-occurrence
-    # Myeloid lineage: Myeloblast → Promyelocyte → Myelocyte → Metamyelocyte → Band → Segmented
+
+    # Myeloid lineage: adjacent stages co-occur (0.3)
+    # Myeloblast → Promyelocyte → Myelocyte → Metamyelocyte → Band → Segmented
     C[0, 1] = C[1, 0] = 0.3  # Myeloblast and Promyelocyte
     C[1, 2] = C[2, 1] = 0.3  # Promyelocyte and Myelocyte
     C[2, 3] = C[3, 2] = 0.3  # Myelocyte and Metamyelocyte
     C[3, 4] = C[4, 3] = 0.3  # Metamyelocyte and Band
     C[4, 5] = C[5, 4] = 0.3  # Band and Segmented
-    
-    # Erythroid lineage: Pro-Erythro → Baso-Erythro → Poly-Erythro → Ortho-Erythro → RBC
-    C[13, 14] = C[14, 13] = 0.3  # Pro-Erythroblast and Baso-Erythroblast
-    C[14, 15] = C[15, 14] = 0.3  # Baso-Erythroblast and Poly-Erythroblast
-    C[15, 16] = C[16, 15] = 0.3  # Poly-Erythroblast and Ortho-Erythroblast
-    C[16, 17] = C[17, 16] = 0.3  # Ortho-Erythroblast and RBC
-    
-    # Mutual exclusivity between distinct lineages
-    # Myeloid with Lymphoid/Erythroid
+
+    # Non-adjacent myeloid stages are mutually exclusive (Paper Table 5)
+    for i in range(6):
+        for j in range(6):
+            if abs(i - j) >= 2:
+                C[i, j] = -1
+
+    # Erythroid lineage: adjacent stages co-occur (0.3)
+    # Pro-Erythro → Baso-Erythro → Poly-Erythro → Ortho-Erythro → RBC
+    erythroid = [13, 14, 15, 16, 17]
+    for idx in range(len(erythroid) - 1):
+        C[erythroid[idx], erythroid[idx + 1]] = 0.3
+        C[erythroid[idx + 1], erythroid[idx]] = 0.3
+
+    # Non-adjacent erythroid stages are mutually exclusive (Paper Table 5)
+    for i in erythroid:
+        for j in erythroid:
+            if abs(erythroid.index(i) - erythroid.index(j)) >= 2:
+                C[i, j] = -1
+
+    # Myeloid vs Lymphoid: mutually exclusive
     for i in range(6):  # Myeloblast to Segmented Neutrophil
-        # Cannot co-exist with lymphoid lineage
         C[i, 9] = C[9, i] = -1  # with Lymphocyte
         C[i, 10] = C[10, i] = -1  # with Plasma Cell
-        
-        # Later myeloid stages cannot co-exist with erythroid lineage
-        if i >= 4:  # Band and Segmented
-            for j in range(13, 18):  # All erythroid stages
-                C[i, j] = C[j, i] = -1
+
+    # Later myeloid stages vs erythroid lineage: mutually exclusive
+    for i in [4, 5]:  # Band and Segmented
+        for j in erythroid:
+            C[i, j] = C[j, i] = -1
     
     # Eosinophil relationships
     C[6, 0] = C[0, 6] = -1  # Eosinophil and Myeloblast

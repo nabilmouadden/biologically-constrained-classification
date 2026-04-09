@@ -101,13 +101,13 @@ class ConstraintModule(nn.Module):
         if training:
             # During training, use fewer MC samples for efficiency
             train_mc_samples = min(self.mc_samples_train, mc_samples)
-            logits, uncertainty = self._mc_forward(f, train_mc_samples)
+            logits, probs, uncertainty = self._mc_forward(f, train_mc_samples)
         else:
             # During inference, use full number of MC samples
-            logits, uncertainty = self._mc_forward(f, mc_samples)
-        
+            logits, probs, uncertainty = self._mc_forward(f, mc_samples)
+
         # 4. Apply adaptive thresholding
-        probs = torch.sigmoid(logits)
+        # Paper: probs = ȳ = 1/M Σ σ(logits^(m)), i.e. mean of sigmoid outputs
         thresholds = self.adaptive_threshold(uncertainty, probs)
         predictions = (probs > thresholds).float()
         
@@ -187,41 +187,41 @@ class ConstraintModule(nn.Module):
     def _mc_forward(self, features, num_samples):
         """
         Perform Monte Carlo dropout for uncertainty estimation.
-        
-        This implements the uncertainty estimation approach from the paper,
-        using Monte Carlo dropout to estimate predictive uncertainty.
-        
+
+        Paper Section 3.2: ŷ^(m) = σ(W_c Dropout(f) + b_c), m = 1, ..., M
+        ȳ_i = 1/M Σ ŷ_i^(m)  (mean of sigmoid outputs, NOT sigmoid of mean logits)
+        U_i = 1/M Σ (ŷ_i^(m) - ȳ_i)²
+
         Args:
             features (torch.Tensor): Feature representations, shape [B, D]
             num_samples (int): Number of MC samples
-            
+
         Returns:
-            tuple: (mean_logits, uncertainty)
+            tuple: (mean_logits, mean_probs, uncertainty)
         """
         batch_size = features.shape[0]
-        
+
         # Initialize tensors for MC sampling results
-        mc_logits = torch.zeros(num_samples, batch_size, self.num_classes, 
+        mc_logits = torch.zeros(num_samples, batch_size, self.num_classes,
                                 device=features.device)
-        
+
         # Perform MC sampling
         for i in range(num_samples):
             # Apply dropout to features
             dropped_features = F.dropout(features, p=self.dropout_rate, training=True)
-            
+
             # Get logits from the classifier
             logits = self.classifier(dropped_features)
             mc_logits[i] = logits
-        
-        # Compute mean logits
+
+        # Mean logits (used for numerically stable BCE loss computation)
         mean_logits = mc_logits.mean(dim=0)  # [B, K]
-        
-        # Convert logits to probabilities
-        probs = torch.sigmoid(mc_logits)
-        mean_probs = probs.mean(dim=0)  # [B, K]
-        
-        # Compute uncertainty (predictive variance)
-        # Uncertainty = 1/M ∑(p_i - p_mean)²
-        uncertainty = ((probs - mean_probs.unsqueeze(0)) ** 2).mean(dim=0)  # [B, K]
-        
-        return mean_logits, uncertainty
+
+        # Paper: ȳ = 1/M Σ σ(logits^(m)) — mean of sigmoid outputs
+        mc_probs = torch.sigmoid(mc_logits)  # [M, B, K]
+        mean_probs = mc_probs.mean(dim=0)  # [B, K]
+
+        # Paper: U_i = 1/M Σ (ŷ_i^(m) - ȳ_i)²
+        uncertainty = ((mc_probs - mean_probs.unsqueeze(0)) ** 2).mean(dim=0)  # [B, K]
+
+        return mean_logits, mean_probs, uncertainty
