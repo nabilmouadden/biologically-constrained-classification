@@ -30,7 +30,6 @@ Thumbs.db
 *.pt
 checkpoints/
 results/
-data/
 
 # Jupyter
 .ipynb_checkpoints/

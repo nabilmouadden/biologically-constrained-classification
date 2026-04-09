@@ -163,14 +163,6 @@ Outputs include:
 │   └── utils/
 │       ├── uncertainty.py      # Calibration metrics
 │       └── visualization.py    # Training curves, constraint viz
-├── tests/                      # Comprehensive test suite (142 tests)
-│   ├── test_constraint_module.py
-│   ├── test_adaptive_threshold.py
-│   ├── test_losses.py
-│   ├── test_constraint_priors.py
-│   ├── test_model_integration.py
-│   ├── test_data.py
-│   └── test_config_passthrough.py
 └── requirements.txt
 ```
 
@@ -184,23 +176,6 @@ $$\mathcal{L}_{total} = \mathcal{L}_{BCE} + \lambda_{con}\mathcal{L}_{con} + \la
 - **Constraint Loss** — Frobenius norm between learned R and prior C matrices
 - **Uncertainty Loss** — KL divergence + hinge term penalizing high-uncertainty predictions
 - **Entropy Regularization** — Normalized by 1/K² to encourage decisive constraint relationships
-
-## Testing
-
-Run the full test suite (142 tests):
-
-```bash
-pytest tests/ -v
-```
-
-Tests cover:
-- Constraint module forward pass, shapes, ranges, MC dropout behavior
-- Adaptive threshold clamping, gradients, formula verification
-- Loss function components and mathematical correctness
-- Prior constraint matrices (symmetry, values from paper Table 3)
-- End-to-end model integration (train step + eval step)
-- Dataset classes and transform building
-- Config passthrough (no hardcoded values)
 
 ## Citation
 
