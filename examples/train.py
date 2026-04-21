@@ -29,6 +29,7 @@ def train_epoch(model, loader, optimizer, loss_fn, device, mc_samples_train=5):
     loss_components = {
         'bce_loss': 0,
         'constraint_loss': 0,
+        'violation_loss': 0,
         'uncertainty_loss': 0,
         'entropy_loss': 0
     }
@@ -76,6 +77,7 @@ def validate(model, loader, loss_fn, device, mc_samples_val=50):
     loss_components = {
         'bce_loss': 0,
         'constraint_loss': 0,
+        'violation_loss': 0,
         'uncertainty_loss': 0,
         'entropy_loss': 0
     }
