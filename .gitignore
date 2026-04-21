@@ -30,6 +30,13 @@ Thumbs.db
 *.pt
 checkpoints/
 results/
+outputs/
+logs/
+# Feature caches and model weights (reproducible from scripts)
+weights/
+data/
+# Pre-packaged figures tarball (figures/ itself is kept)
+figures.tar.gz
 
 # Jupyter
 .ipynb_checkpoints/
