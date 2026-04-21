@@ -79,21 +79,15 @@ Input Image
 
 ## Repository layout (post-MIDL additions)
 
-Two directories extend the MIDL 2025 work:
-
-- [`aml_matek/`](./aml_matek/) — concept-bottleneck experiments on AML Matek.
-  Introduces an 18-morphological-concept intermediate representation derived
-  from Hoffbrand/Briggs, with per-concept mutex and co-occurrence constraints
-  and a conformal-coverage evaluation. Reproducible end to end; see
-  `aml_matek/README.md`.
-- [`gr_neutro/`](./gr_neutro/) — seed for a follow-up on GR-Neutro, including
-  a proposed concept vocabulary and a workflow document for extending the
-  pipeline.
+[`aml_matek/`](./aml_matek/) contains concept-bottleneck experiments on AML
+Matek. It introduces an 18-morphological-concept intermediate representation
+derived from Hoffbrand/Briggs, with per-concept mutex and co-occurrence
+constraints and a conformal-coverage evaluation. Reproducible end to end; see
+`aml_matek/README.md`.
 
 The intended entry point for anyone extending the project is
-[`docs/onboarding.md`](./docs/onboarding.md), which links the three layers
-together and suggests a reading order. The methodology guide for designing
-concept vocabularies and constraint matrices is at
+[`docs/onboarding.md`](./docs/onboarding.md). The methodology guide for
+designing concept vocabularies and constraint matrices is at
 [`docs/concept_design.md`](./docs/concept_design.md).
 
 ## Installation
@@ -176,20 +170,16 @@ Outputs include:
 ├── aml_matek/                  # Concept-bottleneck experiments on AML Matek
 │   ├── concept_config.json     # 18 concepts, class→concept soft matrix, mutex/cooccur list
 │   ├── cache_features.py       # One-shot feature extraction (DinoBloom/DINOv2/ResNet)
-│   ├── models.py               # ConceptAdapter + ConstraintModule (R-match + viol-loss) + JointModel
+│   ├── models.py               # ConceptAdapter + ConstraintModule + JointModel
 │   ├── train.py                # Supports --baseline/joint/frozen × constrained/unconstrained/posw/λ
 │   ├── evaluate.py             # Concept F1, violation rate, probe, conformal coverage
 │   ├── make_figures.py         # 11 paper figures + LaTeX main table
 │   ├── diag_band.py            # Diagnosis script for the band_nucleus F1=0 failure
 │   ├── summary_all.py          # Cross-config numerical summary
 │   └── slurm/                  # 5 SLURM batch scripts
-├── gr_neutro/                  # Starter kit for the GR-Neutro follow-up
-│   ├── concept_config.json     # Option A (classes-as-concepts) + Option B (decomposition) TODO
-│   └── README.md               # Proposed workflow
 ├── docs/                       # Methodology and onboarding docs
-│   ├── onboarding.md           # Connects MIDL 2025, aml_matek/, and gr_neutro/
-│   ├── concept_design.md       # How to design concept vocabularies and constraint matrices
-│   └── gr_neutro_notes.md      # What to port from aml_matek/ into MIDL, what to measure
+│   ├── onboarding.md           # Connects MIDL 2025 and aml_matek/
+│   └── concept_design.md       # How to design concept vocabularies and constraint matrices
 ├── figures/                    # Generated figures from the AML Matek experiments
 └── requirements.txt
 ```

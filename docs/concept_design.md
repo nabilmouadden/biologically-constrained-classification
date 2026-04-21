@@ -2,8 +2,7 @@
 
 This document is the methodology guide. It is organized as a checklist that
 can be followed top-to-bottom when adapting the framework to a new dataset.
-The running examples are AML Matek (complete — `aml_matek/`) and GR-Neutro
-(follow-up seed — `gr_neutro/`).
+The running example is AML Matek (complete — `aml_matek/`).
 
 ## 0. What counts as a concept
 
@@ -15,10 +14,9 @@ microscope. Examples: *multilobed nucleus*, *fine dispersed chromatin*,
 A usable concept satisfies three properties:
 
 1. **Clinical provenance** — it comes from a standard textbook or grading
-   protocol, not from intuition. AML Matek concepts trace to Hoffbrand,
+   protocol, not from intuition. The AML Matek concepts trace to Hoffbrand,
    *Essential Haematology* ch. 1, 8–10 and Briggs, *Haematology in Practice*
-   ch. 2–4. GR-Neutro concepts should trace to standard neutrophil-
-   abnormality grading (Naegli / Briggs ch. 3).
+   ch. 2–4.
 
 2. **Localizable** — a concept should plausibly correspond to something
    visible in a patch of the image. A concept that cannot be localized
@@ -101,18 +99,17 @@ evidence, `0` is the correct entry.
 
 ## 5. Choosing between classes-as-concepts and decomposed concepts
 
-**Single-label tasks with broad class separation** (AML Matek): class labels
-already do most of the work. A decomposed-concept CBM (the route taken in
-`aml_matek/`) provides interpretability but does not noticeably change the
-classifier.
-Constraint matrices on *class* outputs are nearly vacuous because the
-softmax already satisfies mutex pairs.
+**Single-label tasks with broad class separation** (e.g. AML Matek): class
+labels already do most of the work. A decomposed-concept CBM (the route
+taken in `aml_matek/`) provides interpretability; constraint matrices on
+*class* outputs are mostly a tight regularizer because the softmax already
+satisfies mutex pairs.
 
-**Multi-label tasks** (GR-Neutro): classes can themselves serve as concepts.
-Each label is an independent morphological claim, and the constraint matrix
-on class outputs carries real signal because independent sigmoids can fire
-simultaneously. This is the low-effort, high-signal path and is the
-recommended starting point for GR-Neutro.
+**Multi-label tasks with independent sigmoid outputs**: classes can
+themselves serve as concepts. Each label is an independent morphological
+claim, and the constraint matrix on class outputs carries real signal because
+independent sigmoids can fire simultaneously. This is the low-effort,
+high-signal path.
 
 **Multi-label tasks where classes share underlying features**: full
 decomposition into low-level concepts can pay off, because each concept

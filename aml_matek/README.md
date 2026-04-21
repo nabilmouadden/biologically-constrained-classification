@@ -6,16 +6,15 @@ work** (`/src/`): instead of putting the constraint matrix on the class outputs,
 this version places it on an intermediate **18-concept bottleneck** derived from
 clinical hematology textbooks.
 
-The experiments probe how constraint regularization interacts with single-label
-classification. On AML Matek the 15-class softmax already assigns exactly one
-label per cell, so mutex pairs at the class-output level are near-satisfied
-without any regularizer — the violation rate is ~0.004 at the baseline and
-drops to ~0.0006 at λ=1.0, with classification accuracy, concept F1 and macro-F1
-all flat across two orders of magnitude of λ. The artefact that comes out of
-this work is a **direct co-activation penalty** on mutually-exclusive concept
-pairs (see `models.py::ConstraintModule.violation_loss`), which is expected
-to carry more weight on multi-label tasks with hard biological contradictions
-(e.g. GR-Neutro).
+The experiments probe how constraint regularization interacts with
+single-label classification. On AML Matek the 15-class softmax already
+assigns exactly one label per cell, so mutex pairs at the class-output level
+are near-satisfied without any regularizer — the violation rate is ~0.004 at
+the baseline and drops to ~0.0006 at λ=1.0, with classification accuracy,
+concept F1 and macro-F1 all flat across two orders of magnitude of λ. The
+accompanying `models.py::ConstraintModule.violation_loss` implements a
+direct co-activation penalty on mutually-exclusive concept pairs as a
+companion to the R-matching term.
 
 ## Files
 
