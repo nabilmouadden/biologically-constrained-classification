@@ -8,31 +8,36 @@ from src.constants import EPS
 class ConstraintLoss(nn.Module):
     """
     Loss function for the biologically-constrained multi-label classification.
-    
-    This implements the complete loss function described in the paper:
-    "Biologically-Constrained Multi-Label Classification with Learnable Domain Knowledge"
-    
-    The total loss is a weighted sum of:
+
+    The total loss is a weighted sum of five components:
     - Binary Cross-Entropy Loss
-    - Constraint Loss
+    - Constraint Loss — aligns the learned relationship matrix R with the prior C
+    - Violation Loss — direct co-activation penalty over mutually-exclusive class
+      pairs of the prior C, operating on the classifier's sigmoid outputs, so
+      biological mutex constraints are enforced at the prediction level
     - Uncertainty Loss
     - Entropy Loss
     """
-    def __init__(self, lambda_con=0.1, lambda_unc=0.1, lambda_entropy=0.01, 
-                 alpha=0.01, beta=0.1, uncertainty_threshold=0.2):
+    def __init__(self, lambda_con=0.1, lambda_viol=0.1, lambda_unc=0.1,
+                 lambda_entropy=0.01, alpha=0.01, beta=0.1,
+                 uncertainty_threshold=0.2):
         """
         Initialize the constraint loss.
-        
+
         Args:
-            lambda_con (float): Weight for constraint loss
-            lambda_unc (float): Weight for uncertainty loss
-            lambda_entropy (float): Weight for entropy loss
-            alpha (float): Weight for L1 regularization in constraint loss
-            beta (float): Weight for excessive uncertainty penalty
-            uncertainty_threshold (float): Threshold for acceptable uncertainty
+            lambda_con (float): Weight for the constraint-matching loss (R vs C).
+            lambda_viol (float): Weight for the direct co-activation (violation)
+                penalty on mutually-exclusive class pairs. Drives mutex constraint
+                satisfaction at the prediction level. Set to 0 to disable.
+            lambda_unc (float): Weight for uncertainty loss.
+            lambda_entropy (float): Weight for entropy regularization on R.
+            alpha (float): Weight for L1 regularization in the constraint loss.
+            beta (float): Weight for the excessive-uncertainty hinge term.
+            uncertainty_threshold (float): Threshold for acceptable uncertainty.
         """
         super().__init__()
         self.lambda_con = lambda_con
+        self.lambda_viol = lambda_viol
         self.lambda_unc = lambda_unc
         self.lambda_entropy = lambda_entropy
         self.alpha = alpha
@@ -51,33 +56,39 @@ class ConstraintLoss(nn.Module):
             dict: Dictionary of loss components and total loss
         """
         logits = outputs['logits']
+        probs = outputs['probs']
         R = outputs['constraint_matrix']
         uncertainty = outputs['uncertainty']
         C = outputs['prior_constraint_matrix']
-        
+
         # 1. Binary Cross-Entropy Loss
         # Paper: L_BCE = -1/N * sum_i sum_k [...] — sum over K classes, mean over N samples
         bce_loss = F.binary_cross_entropy_with_logits(logits, targets, reduction='none').sum(dim=1).mean()
-        
-        # 2. Constraint Loss
+
+        # 2. Constraint Loss — aligns R with the prior C
         constraint_loss = self._compute_constraint_loss(R, C)
-        
-        # 3. Uncertainty Loss
+
+        # 3. Violation Loss — direct co-activation penalty at the prediction level
+        violation_loss = self._compute_violation_loss(probs, C)
+
+        # 4. Uncertainty Loss
         uncertainty_loss = self._compute_uncertainty_loss(uncertainty, logits, targets)
-        
-        # 4. Entropy Loss
+
+        # 5. Entropy Loss
         entropy_loss = self._compute_entropy_loss(R)
-        
+
         # Combine losses with weights
         total_loss = bce_loss + \
                      self.lambda_con * constraint_loss + \
+                     self.lambda_viol * violation_loss + \
                      self.lambda_unc * uncertainty_loss + \
                      self.lambda_entropy * entropy_loss
-        
+
         return {
             'total_loss': total_loss,
             'bce_loss': bce_loss,
             'constraint_loss': constraint_loss,
+            'violation_loss': violation_loss,
             'uncertainty_loss': uncertainty_loss,
             'entropy_loss': entropy_loss
         }
@@ -112,9 +123,34 @@ class ConstraintLoss(nn.Module):
         
         # L1 regularization to encourage sparsity in R
         l1_term = self.alpha * torch.norm(R, p=1, dim=(1, 2)).mean()
-        
+
         return frobenius_term + l1_term
-    
+
+    def _compute_violation_loss(self, probs, prior_C):
+        """
+        Direct co-activation penalty on mutually-exclusive class pairs of C.
+
+            L_viol = (1/|B|) Σ_{batch} Σ_{(a,b)∈mutex(C)} p_a · p_b
+
+        where mutex(C) = {(a, b) : C_{a,b} < -0.5, a < b}. This term operates on
+        the classifier's (MC-averaged) sigmoid outputs, so its gradient flows
+        directly into the classifier — complementing the constraint-matching loss
+        (which regularizes R) by making mutex satisfaction an explicit objective
+        at prediction time.
+
+        Args:
+            probs (torch.Tensor): Predicted probabilities, shape [B, K].
+            prior_C (torch.Tensor): Prior constraint matrix, shape [K, K].
+
+        Returns:
+            torch.Tensor: Scalar violation loss.
+        """
+        mutex_mask = (prior_C < -0.5).triu(diagonal=1)
+        ai, aj = mutex_mask.nonzero(as_tuple=True)
+        if ai.numel() == 0:
+            return probs.new_zeros(())
+        return (probs[:, ai] * probs[:, aj]).sum(dim=-1).mean()
+
     def _compute_uncertainty_loss(self, uncertainty, logits, targets):
         """
         Compute the uncertainty loss to ensure confident predictions.

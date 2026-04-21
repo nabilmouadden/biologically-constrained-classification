@@ -88,6 +88,7 @@ training:
   # Loss function hyperparameters
   loss:
     lambda_con: 0.1
+    lambda_viol: 0.1
     lambda_unc: 0.1
     lambda_entropy: 0.01
     alpha: 0.01

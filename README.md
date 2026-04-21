@@ -196,14 +196,15 @@ Outputs include:
 
 ## Loss Function
 
-The total loss combines four components:
+The total loss combines five components:
 
-$$\mathcal{L}_{total} = \mathcal{L}_{BCE} + \lambda_{con}\mathcal{L}_{con} + \lambda_{unc}\mathcal{L}_{unc} + \lambda_{ent}\mathcal{L}_{ent}$$
+$$\mathcal{L}_{total} = \mathcal{L}_{BCE} + \lambda_{con}\mathcal{L}_{con} + \lambda_{viol}\mathcal{L}_{viol} + \lambda_{unc}\mathcal{L}_{unc} + \lambda_{ent}\mathcal{L}_{ent}$$
 
-- **BCE Loss** — Binary cross-entropy (summed over K classes, averaged over N samples)
-- **Constraint Loss** — Frobenius norm between learned R and prior C matrices
-- **Uncertainty Loss** — KL divergence + hinge term penalizing high-uncertainty predictions
-- **Entropy Regularization** — Normalized by 1/K² to encourage decisive constraint relationships
+- **BCE Loss** — Binary cross-entropy (summed over K classes, averaged over N samples).
+- **Constraint Loss** ($\mathcal{L}_{con} = \\|R R^\top - C\\|_F^2 + \alpha\\|R\\|_1$) — aligns the learned relationship matrix $R$ with the prior $C$.
+- **Violation Loss** ($\mathcal{L}_{viol} = \frac{1}{|B|}\sum_{i \in B}\sum_{(a,b)\in\text{mutex}(C)} p_{i,a}\,p_{i,b}$) — direct co-activation penalty over the mutually-exclusive class pairs of $C$, applied to the classifier's MC-averaged sigmoid outputs $p$. Its gradient flows into the classifier, so mutex constraints are enforced at the prediction level rather than only at the level of the side matrix $R$.
+- **Uncertainty Loss** — KL divergence + hinge term penalizing high-uncertainty predictions.
+- **Entropy Regularization** — Normalized by $1/K^2$ to encourage decisive constraint relationships.
 
 ## Citation
 
