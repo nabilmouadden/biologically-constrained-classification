@@ -199,7 +199,7 @@ Outputs include:
 The total loss combines five components:
 
 $$
-\mathcal{L}_{total} \;=\; \mathcal{L}_{BCE} \;+\; \lambda_{con}\,\mathcal{L}_{con} \;+\; \lambda_{viol}\,\mathcal{L}_{viol} \;+\; \lambda_{unc}\,\mathcal{L}_{unc} \;+\; \lambda_{ent}\,\mathcal{L}_{ent}
+\mathcal{L}_{total} = \mathcal{L}_{BCE} + \lambda_{con}\,\mathcal{L}_{con} + \lambda_{viol}\,\mathcal{L}_{viol} + \lambda_{unc}\,\mathcal{L}_{unc} + \lambda_{ent}\,\mathcal{L}_{ent}
 $$
 
 - **BCE Loss** — binary cross-entropy, summed over $K$ classes and averaged over $N$ samples.
@@ -207,13 +207,13 @@ $$
 - **Constraint Loss** — aligns the learned relationship matrix $R$ with the prior $C$:
 
 $$
-\mathcal{L}_{con} \;=\; \lVert R R^\top - C \rVert_F^{\,2} \;+\; \alpha\,\lVert R \rVert_1
+\mathcal{L}_{con} = \lVert R R^\top - C \rVert_F^{\,2} + \alpha\,\lVert R \rVert_1
 $$
 
 - **Violation Loss** — direct co-activation penalty over the mutually-exclusive class pairs of $C$, applied to the classifier's MC-averaged sigmoid outputs $p$. Its gradient flows into the classifier, so mutex constraints are enforced at the prediction level:
 
 $$
-\mathcal{L}_{viol} \;=\; \frac{1}{|B|} \sum_{i \in B} \sum_{(a,b)\,\in\,\mathrm{mutex}(C)} p_{i,a}\,p_{i,b}
+\mathcal{L}_{viol} = \frac{1}{|B|} \sum_{i \in B} \sum_{(a,b) \in \mathrm{mutex}(C)} p_{i,a}\,p_{i,b}
 $$
 
 - **Uncertainty Loss** — KL divergence between predicted and target distributions plus a hinge term penalizing predictions whose MC-dropout uncertainty exceeds a threshold.
