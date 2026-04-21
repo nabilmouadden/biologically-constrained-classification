@@ -6,17 +6,16 @@ work** (`/src/`): instead of putting the constraint matrix on the class outputs,
 this version places it on an intermediate **18-concept bottleneck** derived from
 clinical hematology textbooks.
 
-The key finding from these runs: **on AML Matek, constraint regularization has
-almost no effect** because the 15-class softmax already satisfies mutex
-constraints implicitly — the baseline violation rate is ~0.004 and drops to
-~0.0006 with λ=1.0, but classification accuracy, concept F1, and macro-F1 are
-flat across the whole λ sweep. The methodological contribution that emerged
-from this work is a **direct co-activation penalty** on mutually-exclusive
-concept pairs (see `models.py::ConstraintModule.violation_loss`). This is the
-gradient path that was missing in the MIDL 2025 implementation, where the
-R-matching loss is gradient-isolated from the classifier. The same penalty is
-expected to matter on multi-label datasets with hard biological contradictions
-(e.g. GR-Neutro), which is the motivation for the `gr_neutro/` starter kit.
+The experiments probe how constraint regularization interacts with single-label
+classification. On AML Matek the 15-class softmax already assigns exactly one
+label per cell, so mutex pairs at the class-output level are near-satisfied
+without any regularizer — the violation rate is ~0.004 at the baseline and
+drops to ~0.0006 at λ=1.0, with classification accuracy, concept F1 and macro-F1
+all flat across two orders of magnitude of λ. The artefact that comes out of
+this work is a **direct co-activation penalty** on mutually-exclusive concept
+pairs (see `models.py::ConstraintModule.violation_loss`), which is expected
+to carry more weight on multi-label tasks with hard biological contradictions
+(e.g. GR-Neutro).
 
 ## Files
 

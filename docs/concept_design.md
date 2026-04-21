@@ -119,30 +119,30 @@ decomposition into low-level concepts can pay off, because each concept
 contributes to multiple classes and statistical strength is shared. The
 gain materializes only when the features genuinely transfer.
 
-## 6. The constraint loss — what actually works
+## 6. The constraint loss — two complementary terms
 
-The constraint loss in the MIDL 2025 implementation is
-
-```
-L_con = ‖R Rᵀ − C‖_F² + α ‖R‖_1
-```
-
-This updates `R` only; it does not flow gradient into the adapter or the
-classifier. The AML Matek experiments confirmed this empirically: before a
-second loss term was added, constrained and unconstrained runs produced
-bit-identical concept predictions.
-
-The minimum correction is a **direct co-activation penalty**:
+The constraint side of the total loss has two components that serve different
+purposes:
 
 ```
-L_viol = (1/B) Σ_{batch} Σ_{(a, b) ∈ mutex} σ(ẑ_a) · σ(ẑ_b)
+L_con  = ‖R Rᵀ − C‖_F² + α ‖R‖_1                (R-matching)
+L_viol = (1/B) Σ_{batch} Σ_{(a, b) ∈ mutex(C)} σ(ẑ_a) · σ(ẑ_b)    (violation)
 ```
 
-This term does propagate gradient through `σ'` and into the classifier /
-adapter. Using both terms is recommended: the R-matching term regularizes
-the relationship matrix independently of the predictor; the violation term
-shapes predictions. Reference implementation:
-`aml_matek/models.py::ConstraintModule.violation_loss`.
+- `L_con` aligns the learned, per-sample relationship matrix `R` with the
+  prior `C`. Its gradient reaches the feature-projection parameters of the
+  constraint module but does not directly shape the classifier output.
+- `L_viol` operates on the classifier's (MC-averaged) sigmoid outputs `p`
+  and sums the co-activation product over upper-triangular mutex entries of
+  `C`. Its gradient flows into the classifier through `σ'`, so mutex
+  satisfaction is an explicit objective at prediction time, not only a
+  regularization target on `R`.
+
+Reference implementations:
+- `src/models/losses.py::ConstraintLoss` — full loss with both terms,
+  weights `lambda_con` and `lambda_viol`.
+- `aml_matek/models.py::ConstraintModule.violation_loss` — the same penalty
+  in the concept-bottleneck variant operating on concept logits.
 
 ## 7. Validation, not just measurement
 

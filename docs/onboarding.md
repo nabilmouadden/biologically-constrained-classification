@@ -24,34 +24,28 @@ hematological morphology features (nuclear shape, chromatin pattern, granule
 type, N:C ratio, cytoplasm staining). Full results are in `figures/` and
 summarized in `aml_matek/README.md`.
 
-Two findings from this work are load-bearing for anything that comes next:
+Key observations carried forward:
 
-1. **On AML Matek, constraint strength barely moves any metric.** A sweep of λ
-   over two orders of magnitude changes class accuracy by less than 0.15 pp
-   while violation rate drops 7.5×. The ceiling is already near zero because a
-   15-way softmax forces single-winner predictions; mutex constraints at the
-   class level are almost satisfied by construction. AML Matek is not the right
-   sandbox for showing that constraints matter.
+- **On AML Matek, constraint strength barely moves any metric.** A sweep of λ
+  over two orders of magnitude changes class accuracy by less than 0.15 pp
+  while the violation rate drops 7.5×. The ceiling is already near zero
+  because a 15-way softmax forces single-winner predictions; class-level
+  mutex pairs are almost satisfied by construction. AML Matek is not the
+  sandbox where constraint mechanisms show their value.
 
-2. **The MIDL 2025 constraint loss is gradient-isolated from the classifier.**
-   `‖RRᵀ − C‖²` only updates R; it never backpropagates into the adapter or
-   the classifier logits. This was confirmed empirically in the AML Matek
-   experiments, where constrained and unconstrained runs produced bit-identical
-   concept predictions until a second loss term was introduced — a **direct
-   co-activation penalty**,
-   `Σ_{(a,b) ∈ mutex} σ(ẑ_a)·σ(ẑ_b)`, which *does* flow gradient into the
-   predictor. The reference implementation is
-   `aml_matek/models.py::ConstraintModule.violation_loss`.
+- **Rare concepts need class-weighted BCE to avoid collapse.** With only 65
+  positive training samples for `band_nucleus` against 5,400 for the visually
+  similar `multilobed_nucleus`, shared BCE drives the rare concept's F1 to
+  zero. The class-weighted BCE option (`--concept_pos_weight`) recovers it at
+  a modest cost to common concepts.
 
 ### GR-Neutro follow-up — `gr_neutro/`
-A seed directory for extending the `aml_matek/` methodology to GR-Neutro. The
-hypothesis is that GR-Neutro is the setting where the above fix actually
-shows its value: classes are independent sigmoids rather than a softmax,
-mutex pairs (hyper/hypogranulation, hyper/hyposegmentation,
-Normal/any-abnormality) are hard biological contradictions, and there is
-genuine room for a non-constrained model to violate them. The starter kit
-contains a proposed concept vocabulary and a short protocol for porting the
-violation-loss term into the MIDL 2025 pipeline.
+A seed directory for a follow-up on GR-Neutro, where mutex pairs
+(hyper/hypogranulation, hyper/hyposegmentation, Normal vs. any abnormality)
+are hard biological contradictions and the multi-label sigmoid outputs can
+genuinely fire simultaneously. The starter kit contains a proposed concept
+vocabulary (classes-as-concepts, with a decomposed alternative outlined) and
+a workflow document for running the pipeline on the dataset.
 
 ## Suggested reading order
 
@@ -119,11 +113,8 @@ exact commands).
 A fully filled-out `gr_neutro/` directory with:
 
 - a concept config tuned to GR-Neutro biology (not the AML Matek concepts),
-- a training script extending the MIDL 2025 pipeline with the violation-loss
-  term,
-- results showing a meaningful drop in mutex violation rate with negligible
-  weighted-F1 cost,
-- the same 11-figure set regenerated on GR-Neutro,
-- a short research memo summarizing the findings (`aml_matek/` produces
-  analogous artifacts in `figures/` and `main_results_table.{csv,tex}` as
-  references).
+- results from the `configs/gr_neutro.yaml` pipeline reporting per-pair mutex
+  violation rate alongside weighted-F1 and per-class F1,
+- the same 11-figure set regenerated on GR-Neutro (`aml_matek/figures/` and
+  `aml_matek/main_results_table.{csv,tex}` serve as the visual template),
+- a short research memo summarizing the findings.

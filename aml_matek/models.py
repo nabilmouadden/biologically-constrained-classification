@@ -48,22 +48,16 @@ class ConceptAdapter(nn.Module):
 
 
 class ConstraintModule(nn.Module):
-    """Biological-constraint regularization with TWO components.
+    """Biological-constraint regularization with two complementary components.
 
-    1. R-matching loss: ||R R^T - C||_F^2 where R is a learned (K, K) matrix
-       and C is the prior constraint matrix. This is gradient-isolated from the
-       concept adapter (R is a separate parameter).
+    1. R-matching loss: ||R R^T - C||_F^2, where R is a learned (K, K) matrix
+       and C is the prior constraint matrix. Aligns the learned relationship
+       matrix with the prior.
 
     2. Violation loss: a direct penalty on co-activation of mutually exclusive
-       concept pairs, computed from the CURRENT concept logits. This term
-       backpropagates INTO the concept adapter and is the mechanism that actually
-       reduces prediction violations.
-
-    The plan's original spec (v1) had only component 1 and explicitly forbade
-    applying R to the concept logits. That made the "constrained" vs
-    "unconstrained" ablation degenerate (adapter gradient paths identical).
-    Component 2 was added to make the ablation meaningful — it does not apply
-    R to the logits; it directly penalizes biologically impossible co-predictions.
+       concept pairs, computed from the current concept logits. Its gradient
+       reaches the concept adapter, so mutex constraints are enforced at the
+       prediction level.
     """
 
     def __init__(self, num_concepts: int, prior_C: torch.Tensor,

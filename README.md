@@ -83,13 +83,12 @@ Two directories extend the MIDL 2025 work:
 
 - [`aml_matek/`](./aml_matek/) — concept-bottleneck experiments on AML Matek.
   Introduces an 18-morphological-concept intermediate representation derived
-  from Hoffbrand/Briggs and a **direct co-activation penalty on mutually-
-  exclusive concepts**, which is the gradient path that was missing in the
-  MIDL 2025 constraint loss. Reproducible end to end; see
+  from Hoffbrand/Briggs, with per-concept mutex and co-occurrence constraints
+  and a conformal-coverage evaluation. Reproducible end to end; see
   `aml_matek/README.md`.
-- [`gr_neutro/`](./gr_neutro/) — seed for a follow-up on GR-Neutro.
-  Documents which term to port from `aml_matek/` into the MIDL 2025 pipeline and
-  what to measure.
+- [`gr_neutro/`](./gr_neutro/) — seed for a follow-up on GR-Neutro, including
+  a proposed concept vocabulary and a workflow document for extending the
+  pipeline.
 
 The intended entry point for anyone extending the project is
 [`docs/onboarding.md`](./docs/onboarding.md), which links the three layers
@@ -140,7 +139,8 @@ Key configuration options in `configs/gr_neutro.yaml`:
 | `training.mc_samples_train` | `5` | MC samples during training |
 | `training.mc_samples_val` | `50` | MC samples during validation |
 | `training.freeze_backbone` | `true` | Freeze DinoBloom backbone |
-| `training.loss.lambda_con` | `0.1` | Constraint loss weight |
+| `training.loss.lambda_con` | `0.1` | Constraint-matching loss weight (aligns $R$ with $C$) |
+| `training.loss.lambda_viol` | `0.1` | Violation-penalty weight (mutex co-activation at prediction level) |
 | `training.loss.lambda_unc` | `0.1` | Uncertainty loss weight |
 | `training.loss.lambda_entropy` | `0.01` | Entropy regularization weight |
 

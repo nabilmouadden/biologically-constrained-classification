@@ -10,8 +10,8 @@ Recommended reading before editing anything in this folder:
    `aml_matek/`, `gr_neutro/`) and what each one contributes.
 2. `docs/concept_design.md` — methodology for deriving concept vocabularies
    from clinical literature and building constraint matrices.
-3. `docs/gr_neutro_notes.md` — the specific code snippet to port from
-   `aml_matek/` and a protocol for what to measure on GR-Neutro.
+3. `docs/gr_neutro_notes.md` — pipeline configuration and measurement
+   protocol specific to GR-Neutro.
 
 ## Contents
 
@@ -21,45 +21,31 @@ Recommended reading before editing anything in this folder:
 
 ## Proposed workflow
 
-### Step 1 — reproduce the MIDL 2025 baseline
-The codebase in `/src/` already trains on GR-Neutro. Reproducing its numbers
-establishes the control line.
+### Step 1 — run the default pipeline
+`configs/gr_neutro.yaml` is already wired to train with all five loss
+components — BCE, constraint-matching, mutex violation penalty, uncertainty,
+and entropy regularization. A first run establishes the control line:
 
-### Step 2 — add the violation-loss term
-The MIDL 2025 `ConstraintLoss._compute_constraint_loss` only computes
-`‖RRᵀ − C‖² + α‖R‖₁`, which does not backpropagate into the classifier (see
-`docs/onboarding.md` for the empirical confirmation). The minimal addition is
-a second loss term that does:
-
-```python
-def violation_loss(self, logits, exclusive_pairs):
-    """Penalize σ(logit_a) · σ(logit_b) over mutually-exclusive (a, b) pairs."""
-    p = torch.sigmoid(logits)                    # (B, K)
-    ei, ej = exclusive_pairs[:, 0], exclusive_pairs[:, 1]
-    return (p[:, ei] * p[:, ej]).sum(dim=-1).mean()
+```bash
+python examples/train.py --config configs/gr_neutro.yaml --output_dir ./checkpoints
 ```
 
-This should be added as an explicit loss component with its own weight. On
-GR-Neutro the mutex pairs are Normal↔any-abnormality, hyper↔hypogranulation,
-and hyper↔hyposegmentation. The reference implementation (computing `exclusive_pairs`
-from a prior constraint matrix C and applying the penalty) is in
-`aml_matek/models.py::ConstraintModule`.
+### Step 2 — sweep `lambda_viol` and measure
+Fix the other hyperparameters and vary `training.loss.lambda_viol ∈
+{0, 0.01, 0.05, 0.1, 0.3, 1.0}`. Report, per run:
 
-### Step 3 — sweep and measure
-At minimum, compare:
+- weighted F1 and per-class F1,
+- **mutex violation rate** per pair (count of samples where both
+  `σ(concept_a)` and `σ(concept_b)` exceed 0.5 on a mutex pair),
+- conformal coverage at α = 0.05.
 
-- the MIDL 2025 baseline (no violation term),
-- the MIDL 2025 pipeline with the violation term at several λ values
-  (e.g. `{0.01, 0.05, 0.1, 0.3, 1.0}`).
+The Pareto curve of mutex-violation-rate vs. weighted-F1 is the load-bearing
+figure for a write-up.
 
-Report weighted F1, per-class F1, **mutex violation rate** (e.g. count of
-predictions with both `hyper` and `hypo` above 0.5 on the same cell), and
-conformal coverage at α=0.05.
-
-### Step 4 — write up
-A defensible headline for a short paper or thesis chapter:
+### Step 3 — write up
+A defensible headline:
 *"On GR-Neutro — a multi-label neutrophil abnormality task where mutex
-constraints are hard biological contradictions — adding a direct co-activation
+constraints are hard biological contradictions — the direct co-activation
 penalty drops mutex-violation rate substantially without loss of weighted F1,
 producing biologically coherent multi-label predictions."*
 

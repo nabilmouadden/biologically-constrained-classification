@@ -41,52 +41,36 @@ Mutex constraints on GR-Neutro are **hard biological contradictions**, not
 statistical tendencies. That is the regime where a direct co-activation
 penalty is most likely to produce a large, clean effect.
 
-## What to port from `aml_matek/`
+## Pipeline configuration
 
-A single loss term. In `src/models/losses.py`, `ConstraintLoss` currently
-sums:
+`configs/gr_neutro.yaml` drives the default training run via
+`examples/train.py`. The relevant loss hyperparameters are
 
-- `bce_loss` (over class outputs),
-- `constraint_loss` = `‖RRᵀ − C‖² + α‖R‖₁`,
-- `uncertainty_loss` and `entropy_loss` (unchanged).
-
-The new fifth component is computed from the class logits and the hard-mutex
-pairs of C:
-
-```python
-def _compute_violation_loss(self, logits, prior_C):
-    """Direct co-activation penalty over mutually-exclusive class pairs."""
-    # Find mutex pairs from the prior matrix (where C == -1)
-    # Upper triangle only to avoid double-counting
-    mutex_mask = (prior_C < -0.5).triu(diagonal=1)
-    ai, aj = mutex_mask.nonzero(as_tuple=True)
-    if ai.numel() == 0:
-        return logits.new_zeros(())
-    p = torch.sigmoid(logits)                       # (B, K)
-    return (p[:, ai] * p[:, aj]).sum(dim=-1).mean()
+```yaml
+loss:
+  lambda_con:      0.1   # R-matching term: ||RR^T - C||_F^2 + α||R||_1
+  lambda_viol:    0.1   # direct co-activation penalty over mutex pairs of C
+  lambda_unc:      0.1   # uncertainty loss
+  lambda_entropy:  0.01  # entropy regularization on R
 ```
 
-Added to the total:
+The violation term operates on the classifier's MC-averaged sigmoid outputs
+over the upper-triangular mutex entries of `C` (where `C[a, b] < -0.5`),
+contributing a gradient signal that pushes `σ(ẑ_a) · σ(ẑ_b)` toward zero.
+For GR-Neutro these are the Normal–vs.–any-abnormality,
+hyper/hypogranulation, and hyper/hyposegmentation pairs defined in
+`src/models/constraint_priors.py::get_gr_neutro_constraints`.
 
-```python
-violation_loss = self._compute_violation_loss(logits, C)
-total_loss = bce_loss + \
-             self.lambda_con * constraint_loss + \
-             self.lambda_viol * violation_loss + \
-             self.lambda_unc * uncertainty_loss + \
-             self.lambda_entropy * entropy_loss
-```
-
-A reasonable starting point is `lambda_viol = lambda_con = 0.1`, followed by
-a sweep over `lambda_viol ∈ {0, 0.01, 0.05, 0.1, 0.3, 1.0}` analogous to the
-λ sweep in `aml_matek/`. The resulting Pareto curve (violation-rate vs
-weighted-F1) is one of the most load-bearing figures for the follow-up paper.
+A useful experiment is a sweep over `lambda_viol ∈ {0, 0.01, 0.05, 0.1, 0.3,
+1.0}` with the rest of the config fixed. The resulting Pareto curve
+(violation-rate vs. weighted-F1) is the most load-bearing figure for a
+follow-up paper.
 
 ## What to measure
 
 A single table of the following form is the intended headline slide:
 
-| | baseline (MIDL code, no viol term) | + viol term, λ=0.1 | + viol term, λ=1.0 |
+| | λ_viol = 0 | λ_viol = 0.1 | λ_viol = 1.0 |
 |---|---|---|---|
 | Weighted F1 | — | — | — |
 | Macro F1 | — | — | — |
@@ -96,9 +80,10 @@ A single table of the following form is the intended headline slide:
 | Conformal coverage @ α=0.05 | — | — | — |
 | Per-class F1 for each of 7 classes | — | — | — |
 
-Expected outcome: weighted F1 stays within ≈1 pp of the baseline; the three
-mutex rates each drop by at least a factor of 5. If that is not what the
-numbers show, the result should be diagnosed before a draft is written.
+Expected outcome: weighted F1 stays within ≈1 pp of the `λ_viol = 0` column,
+while the three mutex rates each drop by at least a factor of 5. If that is
+not what the numbers show, the result should be diagnosed before a draft is
+written.
 
 ## Practical considerations
 
