@@ -7,7 +7,8 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 import numpy as np
 from tqdm import tqdm
-from src.models.constraint_priors import get_constraint_matrix
+from src.models.constraint_priors import (get_constraint_matrix,
+                                            empirical_constraint_matrix)
 # Import the model components
 from src.models import create_model
 from src.data import get_dataset
@@ -233,9 +234,25 @@ def main():
         num_workers=config['training'].get('num_workers', 4)
     )
     
-    # Load prior constraint matrix if available
-    print(f"Generating constraint matrix for {config['dataset']['name']}...")
-    prior_constraint_matrix = get_constraint_matrix(config['dataset']['name'])
+    # Build the constraint matrix. The config's `model.constraint_source` selects
+    # between the hand-crafted biological prior (default) and a data-driven
+    # empirical + prior hybrid built from training co-occurrences.
+    constraint_source = config['model'].get('constraint_source', 'prior')
+    dataset_name = config['dataset']['name']
+    if constraint_source == 'prior':
+        print(f"Loading prior constraint matrix for {dataset_name}...")
+        prior_constraint_matrix = get_constraint_matrix(dataset_name)
+    elif constraint_source == 'empirical_hybrid':
+        class_names = config['dataset']['class_names']
+        y_train = train_dataset.annotations[class_names].to_numpy().astype(int)
+        print(f"Computing empirical-hybrid constraint matrix from "
+              f"{len(y_train)} training labels...")
+        prior_constraint_matrix = empirical_constraint_matrix(
+            y_train, dataset_name=dataset_name)
+    else:
+        raise ValueError(
+            f"Unknown constraint_source '{constraint_source}'; "
+            f"expected 'prior' or 'empirical_hybrid'.")
     
     # Load backbone model
     if config['model']['backbone'] == 'dinobloom-s':
@@ -306,7 +323,21 @@ def main():
                 param.requires_grad = True
     
     # Create model and loss function (pass configs from YAML)
-    loss_config = config['training'].get('loss', None)
+    loss_config = dict(config['training'].get('loss', {}) or {})
+    # Optional class-imbalance weighting for the BCE term. Enabled by setting
+    # `training.pos_weight: auto` in YAML; computed as clamped neg/pos per class
+    # from the training annotations.
+    posw_cfg = config['training'].get('pos_weight', None)
+    if posw_cfg == 'auto':
+        class_names = config['dataset']['class_names']
+        y_train = train_dataset.annotations[class_names].to_numpy().astype(float)
+        pos = y_train.sum(axis=0)
+        neg = y_train.shape[0] - pos
+        clamp = float(config['training'].get('pos_weight_clamp', 50.0))
+        pw = np.clip(neg / np.maximum(pos, 1.0), None, clamp)
+        loss_config['pos_weight'] = torch.tensor(pw, dtype=torch.float32)
+        print(f"Enabling pos_weight BCE (clamp={clamp}): "
+              f"{[round(float(v), 2) for v in pw]}")
     model_config = {
         'dropout_rate': config['model'].get('dropout_rate', 0.5),
         'base_threshold': config['model'].get('base_threshold', 0.5),
@@ -321,6 +352,7 @@ def main():
         model_config=model_config,
     )
     model = model.to(device)
+    loss_fn = loss_fn.to(device)  # moves pos_weight buffer when set
 
     # Set up optimizer with different learning rates for components
     param_groups = []

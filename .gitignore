@@ -40,7 +40,14 @@ figures.tar.gz
 
 # Jupyter
 .ipynb_checkpoints/
+*.ipynb
 
-# Claude
-.claude/
+# Raw dataset archives
+*.zip
+*.tar.gz
+
+# Manuscript
 *.pdf
+
+# Local assistant state
+.claude/

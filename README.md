@@ -22,9 +22,9 @@ Input Image
     │
     ▼
 ┌──────────────┐
-│  DinoBloom-S │  (frozen backbone)
-│  Foundation   │
-│  Model        │
+│  DinoBloom-S │
+│  Foundation  │
+│  Model       │
 └──────┬───────┘
        │ features (384-dim)
        ▼
@@ -130,13 +130,28 @@ Key configuration options in `configs/gr_neutro.yaml`:
 | `model.backbone` | `dinobloom-s` | Backbone architecture |
 | `model.dropout_rate` | `0.5` | MC Dropout rate for uncertainty |
 | `model.base_threshold` | `0.5` | Base adaptive threshold |
+| `model.constraint_source` | `empirical_hybrid` | `prior` = hand-crafted biological matrix; `empirical_hybrid` = training-data lift scores with biological mutex pairs enforced |
 | `training.mc_samples_train` | `5` | MC samples during training |
-| `training.mc_samples_val` | `50` | MC samples during validation |
-| `training.freeze_backbone` | `true` | Freeze DinoBloom backbone |
-| `training.loss.lambda_con` | `0.1` | Constraint-matching loss weight (aligns $R$ with $C$) |
+| `training.mc_samples_val` | `20` | MC samples during validation |
+| `training.freeze_backbone` | `false` | When `false`, partially fine-tune the backbone (see `unfreeze_last_n_blocks`) |
+| `training.unfreeze_last_n_blocks` | `6` | Number of trailing transformer blocks made trainable |
+| `training.pos_weight` | `auto` | Per-class BCE positive weight: `clamp(neg / pos, max=pos_weight_clamp)`. Set to `null` to disable |
+| `training.pos_weight_clamp` | `50` | Upper bound on the auto pos_weight |
+| `training.loss.lambda_con` | `0.01` | Constraint-matching loss weight (aligns $R$ with $C$) |
 | `training.loss.lambda_viol` | `0.1` | Violation-penalty weight (mutex co-activation at prediction level) |
-| `training.loss.lambda_unc` | `0.1` | Uncertainty loss weight |
+| `training.loss.lambda_unc` | `0.0` | Uncertainty loss weight |
 | `training.loss.lambda_entropy` | `0.01` | Entropy regularization weight |
+
+> **Note — defaults vs the MIDL 2025 paper.** The methodology described above
+> (architecture, losses, adaptive thresholding) is identical to the paper.
+> The ships-with default configuration in `configs/gr_neutro.yaml` reflects
+> a refinement of the training recipe found after publication: partial
+> backbone fine-tuning, a data-driven constraint matrix, per-class
+> `pos_weight` BCE for the heavy class imbalance, and a smaller `lambda_con`.
+> To reproduce the paper's original recipe instead, set
+> `freeze_backbone: true`, `constraint_source: prior`, `pos_weight: null`,
+> `epochs: 50`, `weight_decay: 0.01`, `mc_samples_val: 50`,
+> `loss.lambda_con: 0.1`, `loss.lambda_unc: 0.1`.
 
 ### 3. Inference
 

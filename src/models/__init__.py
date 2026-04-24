@@ -1,7 +1,8 @@
 from .constraint_module import ConstraintModule
 from .adaptive_threshold import AdaptiveThreshold
 from .losses import ConstraintLoss
-from .constraint_priors import get_constraint_matrix, save_constraint_matrix
+from .constraint_priors import (get_constraint_matrix, save_constraint_matrix,
+                                  empirical_constraint_matrix)
 
 
 def create_model(backbone, num_classes, feature_dim, prior_constraint_matrix=None,
@@ -61,5 +62,6 @@ def create_model(backbone, num_classes, feature_dim, prior_constraint_matrix=Non
     return model, loss_fn
 
 
-__all__ = ['ConstraintModule', 'AdaptiveThreshold', 'ConstraintLoss', 
-           'create_model', 'get_constraint_matrix', 'save_constraint_matrix']
+__all__ = ['ConstraintModule', 'AdaptiveThreshold', 'ConstraintLoss',
+           'create_model', 'get_constraint_matrix', 'save_constraint_matrix',
+           'empirical_constraint_matrix']

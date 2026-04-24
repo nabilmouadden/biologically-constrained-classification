@@ -260,7 +260,7 @@ def get_constraint_matrix(dataset_name):
 def save_constraint_matrix(dataset_name, output_path):
     """
     Save the constraint matrix for a dataset to a file.
-    
+
     Args:
         dataset_name (str): Name of the dataset
         output_path (str): Path to save the constraint matrix
@@ -268,3 +268,73 @@ def save_constraint_matrix(dataset_name, output_path):
     constraint_matrix = get_constraint_matrix(dataset_name)
     torch.save(constraint_matrix, output_path)
     print(f"Constraint matrix for {dataset_name} saved to {output_path}")
+
+
+# --------------------------------------------------------------------------
+# Data-driven constraint matrix (empirical + biological priors hybrid)
+# --------------------------------------------------------------------------
+# GR-Neutro pairs that are biologically impossible regardless of training
+# co-occurrence counts. Indices follow the class order used in
+# get_gr_neutro_constraints(): 0=Normal, 1=Chromatin, 2=Dohle,
+# 3=Hypergranulation, 4=Hypersegmentation, 5=Hypogranulation, 6=Hyposegmentation.
+_GR_NEUTRO_BIOLOGICAL_MUTEX = [
+    (0, 1), (0, 2), (0, 3), (0, 4), (0, 5), (0, 6),
+    (3, 5),   # Hypergranulation vs Hypogranulation
+    (4, 6),   # Hypersegmentation vs Hyposegmentation
+]
+
+
+def empirical_constraint_matrix(y_train, n_min=5, dataset_name=None):
+    """Compute a (K, K) constraint matrix from training-set co-occurrences.
+
+    Each entry (i, j) is:
+      - -1 if classes i, j never co-occur in training AND each has at least
+        `n_min` positives (so the empirical zero is trustworthy).
+      - otherwise a lift-based score in [-1, 1]:
+            lift = p(i, j) / (p(i) * p(j))
+            C_ij = (lift - 1) / (lift + 1)
+        so 0 = independent, +1 = perfectly correlated, -1 = anti-correlated.
+      - the diagonal is 1.
+
+    If `dataset_name` matches a known dataset, additional biologically-impossible
+    pairs are forced to -1 even when empirical counts disagree (e.g. a sampling
+    artefact).
+
+    Args:
+        y_train (np.ndarray | torch.Tensor): (N, K) multi-hot training labels.
+        n_min (int): minimum positives per class to trust an empirical zero.
+        dataset_name (str | None): optional dataset identifier to apply
+            biological priors on top of the empirical matrix.
+
+    Returns:
+        torch.Tensor: (K, K) float32 constraint matrix.
+    """
+    if isinstance(y_train, torch.Tensor):
+        y_train = y_train.cpu().numpy()
+    y_train = np.asarray(y_train, dtype=int)
+    N, K = y_train.shape
+    p_marg = y_train.sum(axis=0) / max(N, 1)
+    cooccur_count = (y_train.T @ y_train).astype(float)
+    p_joint = cooccur_count / max(N, 1)
+
+    C = np.zeros((K, K), dtype=np.float32)
+    for i in range(K):
+        for j in range(K):
+            if i == j:
+                C[i, j] = 1.0
+                continue
+            both_supported = (y_train[:, i].sum() >= n_min
+                               and y_train[:, j].sum() >= n_min)
+            if cooccur_count[i, j] == 0 and both_supported:
+                C[i, j] = -1.0
+            elif p_marg[i] > 0 and p_marg[j] > 0:
+                lift = p_joint[i, j] / max(p_marg[i] * p_marg[j], 1e-12)
+                C[i, j] = float(max(-1.0, min(1.0, (lift - 1.0) / (lift + 1.0))))
+
+    if dataset_name is not None and dataset_name.lower() == 'gr_neutro':
+        for (a, b) in _GR_NEUTRO_BIOLOGICAL_MUTEX:
+            if a < K and b < K:
+                C[a, b] = -1.0
+                C[b, a] = -1.0
+
+    return torch.tensor(C, dtype=torch.float32)

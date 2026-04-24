@@ -174,14 +174,14 @@ def main():
     ap.add_argument("--concept_pos_weight", action="store_true",
                     help="Use per-concept positive-class weighting in BCE, "
                          "computed from training-set class-derived concept targets. "
-                         "Fixes rare-concept failure (e.g. band_nucleus when NGB is 0.6%% of data).")
+                         "Recommended for rare concepts (e.g. band_nucleus, present "
+                         "in only ~0.6%% of training samples).")
     ap.add_argument("--tag", default=None,
                     help="Override the auto-generated output directory name. "
                          "Value becomes outputs/<tag>/. Subdirectories allowed (e.g. lambda_sweep/lam0p05).")
     ap.add_argument("--seed", type=int, default=42)
-    # num_workers=0 because features are already in RAM tensors (no I/O). Workers
-    # with num_workers>=1 fork copies of the 7-15 GB feature tensor per process,
-    # which is what caused the DINOv2 OOM on the first run.
+    # Features are already resident in RAM tensors (no I/O), so num_workers=0
+    # avoids forking per-process copies of the 7-15 GB feature tensor.
     ap.add_argument("--num_workers", type=int, default=0)
     args = ap.parse_args()
 

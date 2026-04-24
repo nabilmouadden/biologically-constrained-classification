@@ -20,7 +20,7 @@ class ConstraintLoss(nn.Module):
     """
     def __init__(self, lambda_con=0.1, lambda_viol=0.1, lambda_unc=0.1,
                  lambda_entropy=0.01, alpha=0.01, beta=0.1,
-                 uncertainty_threshold=0.2):
+                 uncertainty_threshold=0.2, pos_weight=None):
         """
         Initialize the constraint loss.
 
@@ -34,6 +34,10 @@ class ConstraintLoss(nn.Module):
             alpha (float): Weight for L1 regularization in the constraint loss.
             beta (float): Weight for the excessive-uncertainty hinge term.
             uncertainty_threshold (float): Threshold for acceptable uncertainty.
+            pos_weight (torch.Tensor | None): Optional per-class weight applied
+                to positive examples in the BCE term. Typically
+                ``neg_count / pos_count`` (clamped) to counteract severe
+                class imbalance. Leave None for unweighted BCE.
         """
         super().__init__()
         self.lambda_con = lambda_con
@@ -43,6 +47,12 @@ class ConstraintLoss(nn.Module):
         self.alpha = alpha
         self.beta = beta
         self.uncertainty_threshold = uncertainty_threshold
+        if pos_weight is not None:
+            if not isinstance(pos_weight, torch.Tensor):
+                pos_weight = torch.as_tensor(pos_weight, dtype=torch.float32)
+            self.register_buffer("pos_weight", pos_weight, persistent=False)
+        else:
+            self.pos_weight = None
     
     def forward(self, outputs, targets):
         """
@@ -62,8 +72,12 @@ class ConstraintLoss(nn.Module):
         C = outputs['prior_constraint_matrix']
 
         # 1. Binary Cross-Entropy Loss
-        # Paper: L_BCE = -1/N * sum_i sum_k [...] — sum over K classes, mean over N samples
-        bce_loss = F.binary_cross_entropy_with_logits(logits, targets, reduction='none').sum(dim=1).mean()
+        # Paper: L_BCE = -1/N * sum_i sum_k [...] — sum over K classes, mean over N samples.
+        # A per-class `pos_weight` upweights positive examples to counteract
+        # class imbalance; when unset this reduces to vanilla BCE.
+        bce_loss = F.binary_cross_entropy_with_logits(
+            logits, targets, pos_weight=self.pos_weight, reduction='none'
+        ).sum(dim=1).mean()
 
         # 2. Constraint Loss — aligns R with the prior C
         constraint_loss = self._compute_constraint_loss(R, C)
@@ -201,18 +215,9 @@ class ConstraintLoss(nn.Module):
         element_entropy = -(R_normalized * torch.log(R_normalized + EPS) +
                            (1 - R_normalized) * torch.log(1 - R_normalized + EPS))
         
-        # Sum entropy over matrix dimensions (K,K), normalize by K^2, and average over batch
-        #
-        # NOTE on sign convention: The paper formula
-        #   L_entropy = -1/K² Σ [R'logR' + (1-R')log(1-R')]
-        # evaluates to the average binary entropy (≥ 0). Adding this with positive λ
-        # and minimizing total loss would minimize entropy — contradicting the paper's
-        # stated goal: "maximizing the binary entropy of each matrix element, allowing
-        # flexibility in relationship learning" (Section 3.3).
-        #
-        # We therefore return NEGATIVE average entropy so that minimizing total loss
-        # maximizes entropy, matching the paper's intent.
+        # Average binary entropy per matrix element; return its negative so that
+        # minimizing (lambda_entropy * L_entropy) maximizes entropy — i.e. keeps
+        # R's entries spread out rather than collapsing to hard {0, 1}.
         K = R.shape[1]
         batch_entropy = element_entropy.sum(dim=(1, 2)).mean() / (K * K)
-
         return -batch_entropy
