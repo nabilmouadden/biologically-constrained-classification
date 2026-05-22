@@ -1,0 +1,17 @@
+# Runtime outputs (regenerated each training run; too large for git)
+outputs/
+logs/
+
+# Old v1 figure pipeline (use figures_v2/ instead)
+figures/
+figures.tar.gz
+
+# Local tarball mirror of figures_v2 (figures_v2/ itself is committed)
+figures_v2.tar.gz
+
+# Pycache
+__pycache__/
+*.pyc
+
+# Pen-suspect visual aid (kept in figures_v2/, not needed separately)
+figures_v2/pen_suspects/
