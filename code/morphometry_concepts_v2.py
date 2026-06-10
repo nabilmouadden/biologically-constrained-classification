@@ -63,7 +63,6 @@ CONCEPTS = [
     "cytoplasmic_texture_uniformity",
     "cytoplasm_basophilia_level",
     "cytoplasmic_inclusion_visibility",
-    "cytoplasmic_vacuolization_degree",
 ]
 
 
@@ -599,7 +598,8 @@ def main():
             print(f"  {i+1}/{len(ann)} done, {n_fail} seg-fail", flush=True)
 
     df = pd.DataFrame(rows)
-    df.to_csv(out_dir / "morphometry_concepts_v2.csv", index=False)
+    df = df.drop(columns=[c for c in ["cytoplasmic_vacuolization_degree"] if c in df.columns])
+    df.to_csv(out_dir / "morphometry_concepts.csv", index=False)
     print(f"Wrote {len(df)} rows. seg-fail={n_fail} "
           f"({100*n_fail/max(1,len(df)):.1f}%) reasons={fail_reasons}", flush=True)
 

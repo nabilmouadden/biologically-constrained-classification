@@ -26,8 +26,7 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader
 
-WORKDIR = Path("/gpfs/workdir/mouaddenn")
-sys.path.insert(0, str(WORKDIR / "thesis/outputs/max_classification"))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 # Import the exact fine-tune machinery (Net, transforms, data loading, split).
 import finetune_7class as ft  # noqa: E402
@@ -72,8 +71,8 @@ def main():
     ap.add_argument("--weight_decay", type=float, default=1e-2)
     ap.add_argument("--dropout", type=float, default=0.3)
     ap.add_argument("--label_smoothing", type=float, default=0.05)
-    ap.add_argument("--annotations", default=str(WORKDIR / "data/gr_neutro_extended/annotations.csv"))
-    ap.add_argument("--data_root", default=str(WORKDIR / "data/gr_neutro_extended"))
+    ap.add_argument("--annotations", default="./data/gr_neutro/annotations.csv")
+    ap.add_argument("--data_root", default="./data/gr_neutro")
     ap.add_argument("--out", required=True, help="output npz path for the ft feature bank")
     args = ap.parse_args()
 

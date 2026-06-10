@@ -24,16 +24,13 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
 
-WORKDIR = Path("/gpfs/workdir/mouaddenn")
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 
-# Make HF/torch caches point to project tmp (no internet on compute nodes).
-os.environ.setdefault("HF_HOME", str(WORKDIR / "tmp" / "hf-cache"))
-os.environ.setdefault("HF_HUB_CACHE", str(WORKDIR / "tmp" / "hf-cache" / "hub"))
-os.environ.setdefault("TORCH_HOME", str(WORKDIR / "tmp" / "torch-hub"))
-os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
-os.environ.setdefault("HF_HUB_OFFLINE", "1")
+# HF/torch use their default user cache; user env wins if set. The first build
+# fetches the public DinoBloom-B backbone from HF-hub (needs network once).
+os.environ.setdefault("TRANSFORMERS_OFFLINE", "0")
+os.environ.setdefault("HF_HUB_OFFLINE", "0")
 
 from data import (read_annotations, stratified_multilabel_split,
                    GRNeutroDataset, build_train_transform, build_eval_transform,
@@ -164,8 +161,8 @@ def evaluate_concepts(probs: np.ndarray, soft_y: np.ndarray, threshold: float = 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--tag", required=True)
-    ap.add_argument("--data_csv", default=str(WORKDIR / "data/gr_neutro_extended/annotations.csv"))
-    ap.add_argument("--data_root", default=str(WORKDIR / "data/gr_neutro_extended"))
+    ap.add_argument("--data_csv", default="./data/gr_neutro/annotations.csv")
+    ap.add_argument("--data_root", default="./data/gr_neutro")
     ap.add_argument("--config", default=str(HERE / "concept_config_gr_neutro.json"))
     ap.add_argument("--out_root", default=str(HERE / "outputs"))
     ap.add_argument("--backbone", default="dinobloom_s")

@@ -1,46 +1,38 @@
 # GR-Neutro concept-bottleneck reproducibility release
 
-Runnable code, released model weights, and **per-abnormality accuracy for every
-weight** for the biologically-constrained haematology classification work: a
-no-concept backbone classifier (frozen + fine-tuned) and the concept
-architectures — **Joint CBM**, **Pure-bottleneck CBM**, **Sequential CBM**,
-**Independent CBM**, plus **CEM** (Concept Embedding Model) and **PCBM-h**
-(post-hoc / residual CBM) — over a **DinoBloom-B** backbone on **GR-Neutro**
+Runnable code, released model weights, and per-abnormality accuracy for a
+DinoBloom-B backbone classifier (frozen + fine-tuned) and the concept
+architectures — Joint CBM, Pure-bottleneck CBM, Sequential CBM, Independent CBM,
+CEM (Concept Embedding Model), and PCBM-h (post-hoc / residual CBM) — on GR-Neutro
 (in-house Gustave Roussy peripheral-blood neutrophil corpus; 4,378 cells, 7
-abnormality classes, 11 textbook morphology concepts, 10 used downstream).
+abnormality classes, 10 downstream textbook morphology concepts).
 
-**Weights are hosted on the Hugging Face Hub** (too large for GitHub):
-👉 **https://huggingface.co/nabimu9/gr-neutro-cbm-weights**
+Weights are hosted on the Hugging Face Hub: **https://huggingface.co/nabimu9/gr-neutro-cbm-weights**
 
 ```
 <repo root>/
-├── code/                      # self-contained runnable code
-│   ├── models.py              # DinoBloomBackbone, ConceptAdapter, ConstraintModule, JointModel
-│   ├── residual_cbm.py        # PCBM-h + CEM + pure-bottleneck heads on cached features
-│   ├── train.py               # end-to-end training (backbone + concept arch)
-│   ├── data.py                # GR-Neutro loading + stratified-multilabel split + transforms
-│   ├── cache_ft_features.py   # fine-tune DinoBloom-B (last-N) and dump CLS feature bank
-│   ├── morphometry_concepts_v2.py  # deterministic label-free morphometry (10 concepts)
-│   ├── infer.py               # single-image inference -> class + concepts
-│   ├── concept_config_gr_neutro.json  # concepts, class->concept matrix, constraint matrix
-│   └── concepts_10.json       # the canonical 10 downstream concepts
-├── weights/
-│   ├── README.md              # what each released weight is + how to load it
-│   └── download_weights.sh    # one-command pull of all weights from the HF Hub
-└── results/
-    ├── accuracy_by_abnormality.md
-    └── accuracy_by_abnormality.csv
+├── code/
+│   ├── models.py                    # DinoBloomBackbone, ConceptAdapter, ConstraintModule, JointModel
+│   ├── residual_cbm.py              # PCBM-h + CEM + pure-bottleneck heads on cached features
+│   ├── train.py                     # end-to-end training (backbone + concept arch)
+│   ├── data.py                      # GR-Neutro loading + stratified-multilabel split + transforms
+│   ├── finetune_7class.py           # single-label 7-class fine-tune of DinoBloom-B
+│   ├── cache_ft_features.py         # fine-tune DinoBloom-B (last-N) and dump CLS feature bank
+│   ├── make_manifest.py             # annotations.csv -> cell_manifest_full_extended.json
+│   ├── morphometry_concepts_v2.py   # deterministic label-free morphometry (10 concepts)
+│   ├── infer.py                     # single-image inference -> class + concepts
+│   ├── concept_config_gr_neutro.json
+│   └── concepts_10.json
+├── examples/                        # synthetic fixtures for an offline wiring smoke test
+├── weights/                         # README + download script (weights pulled from HF)
+├── results/                         # per-abnormality accuracy tables
+├── PREPROCESSING.md                 # preprocessing run order
+└── README.md
 ```
 
 ---
 
 ## Released weights and their accuracy
-
-All weights live in the HF repo above. **Every released weight's accuracy is
-reported below** (and in `results/accuracy_by_abnormality.{md,csv}`). Numbers come
-straight from the run artifacts; nothing is fabricated. The two tables use
-**different evaluation splits** (each end-to-end model's own held-out test split
-vs. the residual-CBM stratified split), so compare *within* a table.
 
 ### End-to-end checkpoints — DinoBloom-B last-6 fine-tuned, seed 42
 
@@ -76,11 +68,17 @@ Reproduced from the released feature banks (`*_features.npz`) via `residual_cbm.
 | `pcbmh_highrank` (r=64) | 0.8318 [0.828, 0.836] | 0.740 | yes |
 | `pure_bottleneck` (fully transparent) | 0.7984 [0.788, 0.808] | 0.698 | yes |
 
-Two findings carried by these heads: **concepts are load-bearing for accuracy**
-(PCBM-h beats a matched-rank random-orthogonal residual by +0.0385 W-F1 [+0.033,
-+0.044]) but **not intervention-faithful** (replacing predicted concepts with the
-true measured values barely moves the prediction: +0.002 / −0.001 W-F1 over a full
-0→1 intervention for PCBM-h / CEM).
+### Head checkpoints (`heads/` on HF) — seed 42 W-F1, frozen / fine-tuned
+
+Standalone concept-head checkpoints hosted under `heads/` on the HF repo. Files are
+named `heads/<method>_<frozen|ft_last4>_s42_head.pt`.
+
+| Method | Frozen W-F1 | Fine-tuned (last-4) W-F1 |
+|---|--:|--:|
+| CEM | 0.844 | 0.936 |
+| `backbone_mlp` | 0.832 | 0.935 |
+| PCBM-h | 0.823 | 0.928 |
+| `pure_bottleneck` | 0.781 | 0.890 |
 
 ### Feature banks
 
@@ -91,117 +89,91 @@ true measured values barely moves the prediction: +0.002 / −0.001 W-F1 over a 
 
 ---
 
-## 0. Dependencies
+## Dependencies
 
-- **Python** 3.10+
-- **PyTorch** (CUDA for training; CPU works for single-image inference) + **torchvision**
-- **timm** (loads the DinoBloom-B backbone from HF-hub)
-- **numpy**, **scikit-learn**, **pandas**, **scipy**, **scikit-image**, **Pillow**
-- **huggingface_hub** (to pull the weights)
+- Python 3.10+
+- PyTorch + torchvision (CUDA for training; CPU works for single-image inference)
+- timm, numpy, scikit-learn, pandas, scipy, scikit-image, Pillow, huggingface_hub, matplotlib
 
 ```bash
 python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt        # or:
-pip install torch torchvision timm numpy scikit-learn pandas scipy scikit-image pillow huggingface_hub
+pip install -r requirements.txt
 ```
 
-### The DinoBloom-B backbone
+CPU-only inference (no CUDA):
 
-The frozen DinoBloom-B backbone is the **public** checkpoint, fetched
-automatically by `timm` the first time a model is built:
-`hf-hub:1aurent/vit_base_patch14_224.dinobloom`. The released `*.pt` checkpoints
-already contain the fine-tuned last-N backbone blocks plus all heads.
+```bash
+pip install torch --index-url https://download.pytorch.org/whl/cpu
+```
+
+The frozen DinoBloom-B backbone is the public checkpoint
+`hf-hub:1aurent/vit_base_patch14_224.dinobloom`, fetched automatically by `timm`
+on first build. To warm the HF cache on a networked node before an offline run:
+
+```bash
+python -c "import timm; timm.create_model('hf-hub:1aurent/vit_base_patch14_224.dinobloom', pretrained=True, img_size=224)"
+```
 
 ---
 
 ## Getting the weights
 
-All weights are on the HF Hub — no Git LFS needed.
-
 ```bash
-# one command, pulls everything into ./weights/
-bash weights/download_weights.sh
-
-# or with the HF CLI directly:
+bash weights/download_weights.sh                      # pulls everything into ./weights/
+# or:
 hf download nabimu9/gr-neutro-cbm-weights --local-dir weights
-
 # or in Python:
-python -c "from huggingface_hub import snapshot_download; \
-snapshot_download('nabimu9/gr-neutro-cbm-weights', local_dir='weights')"
+python -c "from huggingface_hub import snapshot_download; snapshot_download('nabimu9/gr-neutro-cbm-weights', local_dir='weights')"
 ```
 
 See `weights/README.md` for what each file is and how to load it.
 
 ---
 
-## 1. Extract backbone features (frozen + fine-tuned)
+## Preprocessing
 
-The released banks already follow the schema (`features` (N,768) float32,
-`paths` (N,) str). To regenerate the fine-tuned bank:
-
-```bash
-python code/cache_ft_features.py \
-    --variant dinobloom_b --unfreeze_last_n 4 --epochs 30 --seed 0 \
-    --annotations /path/to/gr_neutro/annotations.csv \
-    --data_root   /path/to/gr_neutro \
-    --out         runs/dinobloom_b_ft_last4_features.npz
-```
+See `PREPROCESSING.md` for the full run order (morphometry → manifest → feature bank →
+`residual_cbm.py`). The synthetic fixtures in `examples/` provide an offline wiring
+smoke test.
 
 ---
 
-## 2. Train each configuration
+## Training
 
-### 2a. Concept heads on cached features (CEM, PCBM-h, pure-bottleneck)
+Feature-bank concept heads (CEM, PCBM-h, pure-bottleneck):
 
 ```bash
 python code/residual_cbm.py \
-    --features  weights/dinobloom_b_ft_last4_features.npz \
-    --manifest  /path/to/cell_manifest_full_extended.json \
-    --morpho    /path/to/morphometry_concepts.csv \
-    --out       runs/residual_cbm_ft
-
-# frozen bank:
-python code/residual_cbm.py \
-    --features  weights/dinobloom_b_frozen_features.npz \
-    --manifest  ... --morpho ... --out runs/residual_cbm_frozen
+    --features weights/dinobloom_b_ft_last4_features.npz \
+    --manifest ./runs/cell_manifest_full_extended.json \
+    --morpho   ./runs/morphometry/morphometry_concepts.csv \
+    --out      runs/residual_cbm/results.json
 ```
 
-CEM / PCBM-h heads are reproduced deterministically from a feature bank by this
-script (the frozen backbone they sit on is the public DinoBloom-B download).
-
-### 2b. End-to-end backbone + concept architecture
-
-`train.py` trains the backbone with the concept adapter + constraint module.
-Pick the architecture with `--mode`:
+End-to-end backbone + concept architecture:
 
 ```bash
 # Joint CBM (separate CLS classifier + concept adapter):
 python code/train.py --tag joint_run --mode joint \
     --backbone dinobloom_b --unfreeze_last_n 6 \
-    --data_csv /path/annotations.csv --data_root /path/gr_neutro \
+    --data_csv ./data/gr_neutro/annotations.csv --data_root ./data/gr_neutro \
     --config code/concept_config_gr_neutro.json --seed 42
 
 # Pure-bottleneck CBM (class flows only through concepts):
 python code/train.py --tag cbm_run --mode cbm --lambda_concept_loss 2.0 \
     --backbone dinobloom_b --unfreeze_last_n 6 \
-    --data_csv /path/annotations.csv --data_root /path/gr_neutro \
+    --data_csv ./data/gr_neutro/annotations.csv --data_root ./data/gr_neutro \
     --config code/concept_config_gr_neutro.json --seed 42
 
-# No-concept backbone baseline: add --baseline (classifier-driven head).
+# No-concept backbone baseline: add --baseline.
 ```
 
-Sequential and Independent CBM are produced by the matching concept-training
-schedule on top of `--mode cbm` (concepts-first-then-frozen vs. concept and class
-heads trained independently). Each run writes `outputs/<tag>/model.pt` (same format
-as the released checkpoints) + `predictions.pt` + `summary.json`.
+Each run writes `outputs/<tag>/model.pt` (same format as the released checkpoints) +
+`predictions.pt` + `summary.json`.
 
 ---
 
-## 3. Inference on a new single-cell image
-
-`infer.py` loads any released `*.pt`, predicts the abnormality class, prints the
-learned concept activations, AND independently runs the deterministic morphometry
-to print the 10 measured textbook-concept values:
+## Inference
 
 ```bash
 bash weights/download_weights.sh           # if not done yet
@@ -211,27 +183,16 @@ python infer.py \
     --image   /path/to/one_cell.png
 ```
 
-The architecture (joint / pure-bottleneck / sequential / independent CBM) is read
-from each checkpoint's stored `args`, so the same command works for all of them.
-
----
-
-## 4. Per-abnormality accuracy
-
-Full tables in `results/accuracy_by_abnormality.md` (+ `.csv`) and in the
-"Released weights and their accuracy" section above. Headline: the **Joint CBM**
-and **Pure-bottleneck CBM** reach backbone-baseline parity (0.91 W-F1) while
-exposing 10 auditable concepts; accuracy degrades down the
-joint → sequential → independent training schedule (0.91 → 0.87 → 0.77).
-
-Every number is sourced from a released artifact and labelled with its split.
+`infer.py` loads any released `*.pt`, predicts the abnormality class, prints the
+learned concept activations, and independently runs the deterministic morphometry to
+print the 10 measured textbook-concept values. The architecture is read from each
+checkpoint's stored `args`, so the same command works for all of them.
 
 ---
 
 ## Data note
 
-GR-Neutro is an **in-house Gustave Roussy** peripheral-blood neutrophil corpus and
-is **not** redistributed here. The code expects an `annotations.csv` (header
-`filename,path,<class1>,...,<class7>`) and an image root. Public datasets used
-elsewhere in the paper (AML Matek 2019, MLL-23, Bodzas 2023, Acevedo 2019) are
-cited in the paper; DinoBloom-B's SSL pretraining did **not** include GR-Neutro.
+GR-Neutro is an in-house Gustave Roussy peripheral-blood neutrophil corpus and is not
+redistributed here. The code expects an `annotations.csv` (header
+`filename,path,Normal,Chromatin,Dohle,Hypergranulation,Hypersegmentation,Hypogranulation,Hyposegmentation`,
+one-hot) and an image root. DinoBloom-B's SSL pretraining did not include GR-Neutro.

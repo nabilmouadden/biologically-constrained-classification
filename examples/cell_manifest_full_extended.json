@@ -1,0 +1,95 @@
+{
+  "scope": "gr_neutro",
+  "n_total": 5,
+  "class_names": [
+    "Normal",
+    "Chromatin",
+    "Dohle",
+    "Hypergranulation",
+    "Hypersegmentation",
+    "Hypogranulation",
+    "Hyposegmentation"
+  ],
+  "cells": [
+    {
+      "idx": 0,
+      "filename": "synthetic_cell_0001.png",
+      "path": "Normal/synthetic_cell_0001.png",
+      "label_one_hot": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "dominant_class_idx": 0,
+      "dominant_class_name": "Normal"
+    },
+    {
+      "idx": 1,
+      "filename": "synthetic_cell_0002.png",
+      "path": "Hypogranulation/synthetic_cell_0002.png",
+      "label_one_hot": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0
+      ],
+      "dominant_class_idx": 5,
+      "dominant_class_name": "Hypogranulation"
+    },
+    {
+      "idx": 2,
+      "filename": "synthetic_cell_0003.png",
+      "path": "Chromatin/synthetic_cell_0003.png",
+      "label_one_hot": [
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "dominant_class_idx": 1,
+      "dominant_class_name": "Chromatin"
+    },
+    {
+      "idx": 3,
+      "filename": "synthetic_cell_0004.png",
+      "path": "Dohle/synthetic_cell_0004.png",
+      "label_one_hot": [
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0
+      ],
+      "dominant_class_idx": 2,
+      "dominant_class_name": "Dohle"
+    },
+    {
+      "idx": 4,
+      "filename": "synthetic_cell_0005.png",
+      "path": "Hypersegmentation/synthetic_cell_0005.png",
+      "label_one_hot": [
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0
+      ],
+      "dominant_class_idx": 4,
+      "dominant_class_name": "Hypersegmentation"
+    }
+  ]
+}

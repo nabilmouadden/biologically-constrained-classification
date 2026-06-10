@@ -26,6 +26,18 @@ hf download nabimu9/gr-neutro-cbm-weights --local-dir .
 | `dinobloom_b_frozen_features.npz` | Frozen DinoBloom-B CLS features (4378, 768) | 15 MB |
 | `dinobloom_b_ft_last4_features.npz` | Fine-tuned (last-4) CLS bank, seed 0 (4378, 768) | 14 MB |
 
+## Head checkpoints (`heads/` on HF)
+
+Standalone concept-head checkpoints, hosted under `heads/` on the HF repo.
+Files are named `heads/<method>_<frozen|ft_last4>_s42_head.pt` (seed 42).
+
+| File | Method | Frozen W-F1 | Fine-tuned (last-4) W-F1 |
+|------|--------|------------:|-------------------------:|
+| `heads/cem_frozen_s42_head.pt` / `heads/cem_ft_last4_s42_head.pt` | CEM | 0.844 | 0.936 |
+| `heads/backbone_mlp_frozen_s42_head.pt` / `heads/backbone_mlp_ft_last4_s42_head.pt` | backbone_mlp | 0.832 | 0.935 |
+| `heads/pcbmh_frozen_s42_head.pt` / `heads/pcbmh_ft_last4_s42_head.pt` | PCBM-h | 0.823 | 0.928 |
+| `heads/pure_bottleneck_frozen_s42_head.pt` / `heads/pure_bottleneck_ft_last4_s42_head.pt` | pure_bottleneck | 0.781 | 0.890 |
+
 ## What each `.pt` contains
 
 `torch.save` dict with:

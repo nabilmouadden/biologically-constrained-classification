@@ -8,9 +8,9 @@ Given ONE peripheral-blood single-cell image and ONE released checkpoint
      the class names, the prior concept-constraint matrix ``prior_C``, the
      backbone variant and the ``mode``), and rebuilds the exact ``JointModel``
      that produced it. Loading is metadata-driven, so the same entrypoint works
-     for the joint architecture (``B_kitchen_*`` -> separate CLS classifier +
-     concept adapter) and the pure-bottleneck CBM (``cbm_*`` -> class predicted
-     only through the concept layer).
+     for the joint architecture (``joint_cbm_*`` -> separate CLS classifier +
+     concept adapter) and the pure-bottleneck CBM (``pure_bottleneck_cbm_*`` ->
+     class predicted only through the concept layer).
   2. Runs the backbone forward on the image and prints
        - the predicted abnormality class (argmax over the 7 GR-Neutro classes),
          with the full per-class probability vector, and
@@ -27,7 +27,7 @@ the released weights.
 Example
 -------
     python infer.py \
-        --weights ../weights/cbm_joint_s0_model.pt \
+        --weights ../weights/joint_cbm_dinobloomB_ft_s42.pt \
         --image /path/to/one_cell.png
 
 Notes

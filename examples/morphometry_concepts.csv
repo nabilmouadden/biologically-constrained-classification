@@ -1,0 +1,6 @@
+filename,seg_ok,nuclear_lobulation_degree,nuclear_contour_irregularity,nucleus_to_cytoplasm_ratio,chromatin_condensation_level,chromatin_clumping_pattern,cytoplasmic_granule_density,granule_coarseness,cytoplasmic_texture_uniformity,cytoplasm_basophilia_level,cytoplasmic_inclusion_visibility
+synthetic_cell_0001.png,1,0.42,0.31,0.55,0.48,0.50,0.52,0.40,0.61,0.33,0.12
+synthetic_cell_0002.png,1,0.38,0.27,0.49,0.44,0.41,0.18,0.22,0.70,0.29,0.09
+synthetic_cell_0003.png,1,0.45,0.36,0.58,0.72,0.68,0.50,0.43,0.55,0.40,0.15
+synthetic_cell_0004.png,1,0.40,0.33,0.62,0.47,0.46,0.54,0.39,0.58,0.66,0.71
+synthetic_cell_0005.png,1,0.81,0.64,0.51,0.49,0.52,0.53,0.41,0.60,0.35,0.14

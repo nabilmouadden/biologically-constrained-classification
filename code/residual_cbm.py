@@ -505,20 +505,29 @@ def cem_ttint_curve(model, Xte_t, cte_b, yte, K_class, fracs=(0.0, 0.25, 0.5, 0.
 # Main
 # --------------------------------------------------------------------------- #
 def main():
+    global SEEDS, N_BOOT
     ap = argparse.ArgumentParser()
     here = Path(__file__).resolve().parent
-    ap.add_argument("--features", default=str(here / "outputs/dinobloom_features.npz"))
-    ap.add_argument("--manifest", default=str(here / "outputs/p3_pilot/cell_manifest_full_extended.json"))
-    ap.add_argument("--morpho", default=str(here / "outputs/morphometry_concepts/morphometry_concepts.csv"))
+    ap.add_argument("--features", default=str(here / "../weights/dinobloom_b_frozen_features.npz"))
+    ap.add_argument("--manifest", default=str(here / "../examples/cell_manifest_full_extended.json"))
+    ap.add_argument("--morpho", default=str(here / "../examples/morphometry_concepts.csv"))
     ap.add_argument("--backbone_json", default="",
                     help="optional max_classification ft JSON for the W-F1 reference")
     ap.add_argument("--backbone_tag", default="frozen", help="label for the backbone reference")
-    ap.add_argument("--out", default=str(here / "outputs/residual_cbm/results.json"))
+    ap.add_argument("--out", default=str(here / "../runs/residual_cbm/results.json"))
     ap.add_argument("--d_res", type=int, default=10, help="residual rank for PCBM-h + matched random-ortho control")
     ap.add_argument("--d_res_high", type=int, default=64, help="residual rank for the high-capacity PCBM-h (reach-backbone) variant + its matched control")
     ap.add_argument("--emb", type=int, default=16, help="CEM per-concept embedding dim")
     ap.add_argument("--epochs", type=int, default=80)
+    ap.add_argument("--seeds", default=",".join(str(s) for s in SEEDS),
+                    help="comma-separated seeds (default = the full multi-seed list)")
+    ap.add_argument("--n_boot", type=int, default=N_BOOT,
+                    help="paired-bootstrap resamples for delta W-F1 CIs")
     args = ap.parse_args()
+
+    # Working seed list / bootstrap count from CLI (override module constants).
+    SEEDS = [int(s) for s in args.seeds.split(",")]
+    N_BOOT = args.n_boot
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     t0 = time.time()
@@ -598,13 +607,13 @@ def main():
 
         # ---- paired bootstrap deltas vs backbone_mlp ----
         rng = np.random.default_rng(seed)
-        res["delta_pcbmh_vs_backbone"] = paired_bootstrap_wf1(yte, bb_pred, pc_pred, K_class, rng)
-        res["delta_cem_vs_backbone"] = paired_bootstrap_wf1(yte, bb_pred, cem_pred, K_class, np.random.default_rng(seed + 1))
-        res["delta_pcbmh_vs_randortho"] = paired_bootstrap_wf1(yte, rnd_pred, pc_pred, K_class, np.random.default_rng(seed + 2))
-        res["delta_pcbmh_vs_purebottleneck"] = paired_bootstrap_wf1(yte, cbm_pred, pc_pred, K_class, np.random.default_rng(seed + 3))
-        res["delta_pcbmh_highrank_vs_backbone"] = paired_bootstrap_wf1(yte, bb_pred, pch_pred, K_class, np.random.default_rng(seed + 4))
-        res["delta_pcbmh_highrank_vs_randortho"] = paired_bootstrap_wf1(yte, pch_rnd_pred, pch_pred, K_class, np.random.default_rng(seed + 5))
-        res["delta_pcbmh_faithful_vs_backbone"] = paired_bootstrap_wf1(yte, bb_pred, pcf_pred, K_class, np.random.default_rng(seed + 6))
+        res["delta_pcbmh_vs_backbone"] = paired_bootstrap_wf1(yte, bb_pred, pc_pred, K_class, rng, n_boot=N_BOOT)
+        res["delta_cem_vs_backbone"] = paired_bootstrap_wf1(yte, bb_pred, cem_pred, K_class, np.random.default_rng(seed + 1), n_boot=N_BOOT)
+        res["delta_pcbmh_vs_randortho"] = paired_bootstrap_wf1(yte, rnd_pred, pc_pred, K_class, np.random.default_rng(seed + 2), n_boot=N_BOOT)
+        res["delta_pcbmh_vs_purebottleneck"] = paired_bootstrap_wf1(yte, cbm_pred, pc_pred, K_class, np.random.default_rng(seed + 3), n_boot=N_BOOT)
+        res["delta_pcbmh_highrank_vs_backbone"] = paired_bootstrap_wf1(yte, bb_pred, pch_pred, K_class, np.random.default_rng(seed + 4), n_boot=N_BOOT)
+        res["delta_pcbmh_highrank_vs_randortho"] = paired_bootstrap_wf1(yte, pch_rnd_pred, pch_pred, K_class, np.random.default_rng(seed + 5), n_boot=N_BOOT)
+        res["delta_pcbmh_faithful_vs_backbone"] = paired_bootstrap_wf1(yte, bb_pred, pcf_pred, K_class, np.random.default_rng(seed + 6), n_boot=N_BOOT)
 
         # ---- faithfulness (seed 0 stores curves for the report; all seeds aggregate slopes) ----
         fracs, pc_curve = pcbmh_ttint_curve(m_pc, Xte_t, cte_t, yte, K_class, device, seed=seed)

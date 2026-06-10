@@ -7,4 +7,8 @@ scipy>=1.7.0
 pillow>=8.2.0
 pyyaml>=5.4.1
 tqdm>=4.61.1
+timm
+scikit-image
+huggingface_hub
+matplotlib
 # inference-only: torch + torchvision + numpy + pillow are sufficient
