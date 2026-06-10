@@ -1,0 +1,224 @@
+{
+  "concepts": [
+    "nuclear_lobulation_degree",
+    "nuclear_contour_irregularity",
+    "nucleus_to_cytoplasm_ratio",
+    "chromatin_condensation_level",
+    "chromatin_clumping_pattern",
+    "cytoplasmic_granule_density",
+    "granule_coarseness",
+    "cytoplasmic_texture_uniformity",
+    "cytoplasm_basophilia_level",
+    "cytoplasmic_inclusion_visibility"
+  ],
+  "gr_neutro_classes": [
+    "Normal",
+    "Chromatin",
+    "Dohle",
+    "Hypergranulation",
+    "Hypersegmentation",
+    "Hypogranulation",
+    "Hyposegmentation"
+  ],
+  "normal_class_index": 0,
+  "class_to_concept_matrix": {
+    "_description": "Soft per-class concept profile (7 classes x 10 concepts), values in [0,1]. Per-image targets aggregate active classes via MAX-DEVIATION-FROM-NORMAL: for each concept, pick the active classs value whose signed deviation from the Normal row is largest in absolute value. Preserves defining-abnormality signals on multi-label cells.",
+    "_class_order": [
+      "Normal",
+      "Chromatin",
+      "Dohle",
+      "Hypergranulation",
+      "Hypersegmentation",
+      "Hypogranulation",
+      "Hyposegmentation"
+    ],
+    "_concept_order": [
+      "nuclear_lobulation_degree",
+      "nuclear_contour_irregularity",
+      "nucleus_to_cytoplasm_ratio",
+      "chromatin_condensation_level",
+      "chromatin_clumping_pattern",
+      "cytoplasmic_granule_density",
+      "granule_coarseness",
+      "cytoplasmic_texture_uniformity",
+      "cytoplasm_basophilia_level",
+      "cytoplasmic_inclusion_visibility"
+    ],
+    "_aggregation": "max_deviation_from_baseline",
+    "matrix": [
+      [
+        0.5,
+        0.4,
+        0.5,
+        0.5,
+        0.4,
+        0.5,
+        0.3,
+        0.6,
+        0.2,
+        0.0
+      ],
+      [
+        0.5,
+        0.4,
+        0.5,
+        1.0,
+        1.0,
+        0.5,
+        0.3,
+        0.6,
+        0.2,
+        0.0
+      ],
+      [
+        0.5,
+        0.4,
+        0.5,
+        0.5,
+        0.4,
+        0.5,
+        0.3,
+        0.5,
+        0.6,
+        1.0
+      ],
+      [
+        0.5,
+        0.4,
+        0.5,
+        0.5,
+        0.5,
+        1.0,
+        0.9,
+        0.3,
+        0.4,
+        0.0
+      ],
+      [
+        1.0,
+        0.6,
+        0.4,
+        0.5,
+        0.4,
+        0.5,
+        0.3,
+        0.6,
+        0.2,
+        0.0
+      ],
+      [
+        0.5,
+        0.4,
+        0.5,
+        0.5,
+        0.4,
+        0.0,
+        0.0,
+        0.8,
+        0.2,
+        0.0
+      ],
+      [
+        0.0,
+        0.4,
+        0.6,
+        0.5,
+        0.7,
+        0.5,
+        0.3,
+        0.6,
+        0.2,
+        0.0
+      ]
+    ]
+  },
+  "concept_constraint_matrix": {
+    "_description": "Symmetric 10x10 matrix, values in [-1, +1]. Diagonal = 1.0. From Morphological_Concepts.docx §6. The docx defines no -1 entries; the ConstraintModule therefore uses a SOFT cooccur loss -<C, mean p p^T>_F (off-diagonal) rather than hard mutex penalties. The R-matching loss ||R R^T - C||_F^2 is also active. Constrained vs unconstrained ablation = lambda>0 vs lambda=0. NOTE: cytoplasmic_vacuolization_degree was removed (10 concepts, formerly 11) as non-biological for the GR-Neutro neutrophil corpus -- the morphometry detector fired on artefacts (~85% of cells, mean 0.69), not real vacuoles, so its signed AUC 0.634 reliability was spurious; the toxic-change-triad cooccurrence priors that paired vacuoles with Döhle/toxic granulation and the Hypergranulation.vacuolization entry were dropped with it.",
+    "mutually_exclusive_pairs": [],
+    "negative_associated_pairs": [
+      {
+        "concepts": [
+          "cytoplasmic_granule_density",
+          "cytoplasmic_texture_uniformity"
+        ],
+        "value": -0.8,
+        "reason": "Dense granulation reduces cytoplasmic uniformity (docx §6.1)"
+      },
+      {
+        "concepts": [
+          "granule_coarseness",
+          "cytoplasmic_texture_uniformity"
+        ],
+        "value": -0.7,
+        "reason": "Coarse/toxic granules disrupt cytoplasmic smoothness (docx §6.1)"
+      },
+      {
+        "concepts": [
+          "cytoplasm_basophilia_level",
+          "cytoplasmic_texture_uniformity"
+        ],
+        "value": -0.5,
+        "reason": "Increased basophilia reflects reactive, non-uniform cytoplasm (docx §6.1)"
+      },
+      {
+        "concepts": [
+          "nuclear_lobulation_degree",
+          "nucleus_to_cytoplasm_ratio"
+        ],
+        "value": -0.5,
+        "reason": "Increased segmentation reduces apparent nuclear compactness (docx §6.1)"
+      }
+    ],
+    "cooccurring_pairs": [
+      {
+        "concepts": [
+          "chromatin_condensation_level",
+          "chromatin_clumping_pattern"
+        ],
+        "value": 0.9,
+        "reason": "Dense chromatin is typically coarse and clumped (docx §6.2)"
+      },
+      {
+        "concepts": [
+          "chromatin_condensation_level",
+          "nucleus_to_cytoplasm_ratio"
+        ],
+        "value": 0.5,
+        "reason": "Chromatin condensation associated with compact nuclear appearance (docx §6.2)"
+      },
+      {
+        "concepts": [
+          "nuclear_contour_irregularity",
+          "nuclear_lobulation_degree"
+        ],
+        "value": 0.6,
+        "reason": "Increased segmentation leads to more irregular nuclear contours (docx §6.2)"
+      },
+      {
+        "concepts": [
+          "cytoplasmic_granule_density",
+          "granule_coarseness"
+        ],
+        "value": 0.7,
+        "reason": "Increased granule number associated with increased granule prominence (docx §6.2)"
+      },
+      {
+        "concepts": [
+          "cytoplasmic_inclusion_visibility",
+          "cytoplasm_basophilia_level"
+        ],
+        "value": 0.4,
+        "reason": "Döhle bodies and similar inclusions occur in reactive, basophilic cytoplasm (docx §6.2)"
+      }
+    ]
+  },
+  "edits_applied_vs_docx": {
+    "Hyposeg.chromatin_clumping_pattern": "0.4 -> 0.7 (Pelger-Huët dense clumping; Bain)",
+    "Dohle.cytoplasm_basophilia_level": "0.7 -> 0.4 (basophilia is focal, not global)",
+    "Hypergran.nuclear_contour_irregularity": "0.5 -> 0.4 (toxic gran is cytoplasmic only)",
+    "C(lobulation, condensation)": "-0.3 -> 0.0 (weak; segmented chromatin IS condensed)",
+    "Multi-label target aggregation": "mean -> max-deviation-from-Normal-baseline",
+    "v2_2026-05-06": "Dohle.basophilia 0.4->0.6 / Hypergran.vacuolization 0.4->0.6 / Dohle.vacuolization 0.3->0.5. Reason: at hard threshold 0.5 the v1 values left basophilia and vacuolization with zero positive support, capping mean concept F1 at 9/11=0.82. Bumped to clinically-defensible levels (toxic-change neutrophils do have generalized basophilia/visible vacuoles).",
+    "v3_2026-06-09": "Removed cytoplasmic_vacuolization_degree concept (11 -> 10 concepts). Reason: non-biological for the in-house GR-Neutro neutrophil corpus -- cytoplasmic vacuolization does not occur in this corpus; the morphometry detector fired on artefacts in ~85% of cells (mean 0.69) rather than real vacuoles, making its signed AUC 0.634 reliability spurious. Dropped its class_to_concept_matrix column, its constraint-matrix row/column, and the toxic-change-triad / Hypergranulation cooccurrence priors that referenced it. This reduces the textbook-CBM bottleneck dimension from 11 to 10 for FUTURE runs."
+  }
+}

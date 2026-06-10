@@ -1,0 +1,17 @@
+{
+  "_description": "Canonical GR-Neutro concept list. EXACTLY 10 concepts. cytoplasmic_vacuolization_degree is PERMANENTLY REMOVED (biologically absent in the in-house GR-Neutro neutrophil corpus; its deterministic morphometry detector fired on artefacts in ~85% of cells, mean 0.69, making its signed AUC 0.634 reliability spurious). Every GR-Neutro experiment MUST import this list and SELECT these 10 columns rather than grabbing all CSV concept columns.",
+  "n_concepts": 10,
+  "removed": ["cytoplasmic_vacuolization_degree"],
+  "concepts": [
+    "nuclear_lobulation_degree",
+    "nuclear_contour_irregularity",
+    "nucleus_to_cytoplasm_ratio",
+    "chromatin_condensation_level",
+    "chromatin_clumping_pattern",
+    "cytoplasmic_granule_density",
+    "granule_coarseness",
+    "cytoplasmic_texture_uniformity",
+    "cytoplasm_basophilia_level",
+    "cytoplasmic_inclusion_visibility"
+  ]
+}
