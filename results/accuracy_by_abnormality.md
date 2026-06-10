@@ -42,7 +42,5 @@ Reproduce from the released feature banks via `code/residual_cbm.py`.
 | pcbmh_highrank (r=64) | 0.8318 [0.828, 0.836] | 0.740 | 0.833 | yes |
 | pure_bottleneck (fully transparent) | 0.7984 [0.788, 0.808] | 0.698 | 0.796 | yes |
 
-Controls: PCBM-h vs matched-rank random-orthogonal residual = **+0.0385 W-F1
-[+0.033, +0.044]** (concepts load-bearing for accuracy). Intervention faithfulness:
-PCBM-h / CEM full 0→1 intervention gain = **+0.002 / −0.001 W-F1** (heads route
-around the concepts — useful ≠ faithful).
+PCBM-h vs matched-rank random-orthogonal residual: +0.0385 W-F1 [+0.033, +0.044].
+PCBM-h / CEM full 0→1 test-time intervention gain: +0.002 / −0.001 W-F1.
