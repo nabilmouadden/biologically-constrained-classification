@@ -12,9 +12,9 @@ split), so compare within a section.
 
 | Weight | Architecture | W-F1 | Macro-F1 | Subset acc. | Multi-seed mean W-F1 |
 |---|---|--:|--:|--:|--:|
-| joint_cbm_dinobloomB_ft_s42.pt | Joint CBM | 0.912 | 0.861 | 0.865 | 0.887 ± 0.012 |
+| joint_cbm_dinobloomB_ft_s42.pt | Joint CBM | 0.912 | 0.861 | 0.865 | 0.886 ± 0.014 |
 | pure_bottleneck_cbm_dinobloomB_ft_s42.pt | Pure-bottleneck CBM (λ=2) | 0.909 | 0.862 | 0.847 | ≈ 0.88 |
-| backbone_baseline_dinobloomB_ft_s42.pt | No-concept backbone baseline | 0.907 | 0.865 | 0.868 | 0.884 |
+| backbone_baseline_dinobloomB_ft_s42.pt | No-concept backbone baseline | 0.907 | 0.865 | 0.868 | 0.890 |
 | cbm_sequential_dinobloomB_ft_s42.pt | Sequential CBM | 0.873 | 0.804 | 0.756 | — |
 | cbm_independent_dinobloomB_ft_s42.pt | Independent CBM | 0.772 | 0.748 | 0.585 | — |
 

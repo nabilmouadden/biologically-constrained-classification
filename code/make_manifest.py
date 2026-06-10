@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Build cell_manifest_full_extended.json from a GR-Neutro annotations.csv.
 
-annotations.csv header (one-hot, exactly one class column = 1 per row):
+annotations.csv header (multi-label: >=1 class column set per row; ~5% of
+GR-Neutro cells carry two abnormalities, dominant_class_idx = argmax):
     filename,path,Normal,Chromatin,Dohle,Hypergranulation,Hypersegmentation,Hypogranulation,Hyposegmentation
 
 Output schema (cell_manifest_full_extended.json):
@@ -51,10 +52,13 @@ def build_manifest(annotations_csv, data_root=None, scope="gr_neutro"):
                 f"header was {reader.fieldnames}")
         for idx, row in enumerate(reader):
             one_hot = [int(round(float(row[c]))) for c in CLASS_NAMES]
-            if sum(one_hot) != 1:
+            if sum(one_hot) == 0:
                 raise ValueError(
-                    f"row {idx} ({row.get('filename')}) is not one-hot: {one_hot}")
-            dom = one_hot.index(1)
+                    f"row {idx} ({row.get('filename')}) has no class label: {one_hot}")
+            # GR-Neutro is multi-label: ~5% of cells carry >=2 abnormality labels.
+            # Keep the full label vector; dominant_class_idx is the argmax (first max),
+            # matching how data.py / residual_cbm.py reduce a cell to one class.
+            dom = max(range(len(one_hot)), key=lambda i: one_hot[i])
             cells.append({
                 "idx": idx,
                 "filename": row["filename"],

@@ -2,7 +2,7 @@ section,weight_or_method,architecture,split,metric,value
 end_to_end,joint_cbm_dinobloomB_ft_s42.pt,Joint CBM,own_test_s42,weighted_f1,0.912
 end_to_end,joint_cbm_dinobloomB_ft_s42.pt,Joint CBM,own_test_s42,macro_f1,0.861
 end_to_end,joint_cbm_dinobloomB_ft_s42.pt,Joint CBM,own_test_s42,subset_acc,0.865
-end_to_end,joint_cbm_dinobloomB_ft_s42.pt,Joint CBM,multiseed,weighted_f1_mean,0.887
+end_to_end,joint_cbm_dinobloomB_ft_s42.pt,Joint CBM,multiseed,weighted_f1_mean,0.886
 end_to_end,pure_bottleneck_cbm_dinobloomB_ft_s42.pt,Pure-bottleneck CBM,own_test_s42,weighted_f1,0.909
 end_to_end,pure_bottleneck_cbm_dinobloomB_ft_s42.pt,Pure-bottleneck CBM,own_test_s42,macro_f1,0.862
 end_to_end,pure_bottleneck_cbm_dinobloomB_ft_s42.pt,Pure-bottleneck CBM,own_test_s42,subset_acc,0.847
