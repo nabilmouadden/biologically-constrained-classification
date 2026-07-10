@@ -1,0 +1,21 @@
+# GR-Neutro concept-bottleneck release — pinned dependencies (CPU).
+#
+# The line below points pip at the PyTorch CPU wheel index so a plain
+#     pip install -r requirements.txt
+# resolves the CPU builds of torch/torchvision (no CUDA/nvidia wheels pulled).
+# PyPI is still used for everything else via its default index.
+#
+# These pins are the versions the release was verified end-to-end on (CPU,
+# Python 3.12): infer.py single-image inference and residual_cbm.py reproduce
+# both run to completion with these versions.
+--extra-index-url https://download.pytorch.org/whl/cpu
+
+torch==2.12.0+cpu
+torchvision==0.27.0+cpu
+timm==1.0.27
+numpy==2.4.6
+scikit-learn==1.9.0
+pandas==3.0.3
+scipy==1.17.1
+scikit-image==0.26.0
+pillow==12.2.0

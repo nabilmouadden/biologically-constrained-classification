@@ -1,0 +1,16 @@
+{
+  "_description": "Canonical GR-Neutro concept list. EXACTLY 10 concepts. Every GR-Neutro experiment MUST import this list and SELECT these 10 columns rather than grabbing all CSV concept columns.",
+  "n_concepts": 10,
+  "concepts": [
+    "nuclear_lobulation_degree",
+    "nuclear_contour_irregularity",
+    "nucleus_to_cytoplasm_ratio",
+    "chromatin_condensation_level",
+    "chromatin_clumping_pattern",
+    "cytoplasmic_granule_density",
+    "granule_coarseness",
+    "cytoplasmic_texture_uniformity",
+    "cytoplasm_basophilia_level",
+    "cytoplasmic_inclusion_visibility"
+  ]
+}
