@@ -1,0 +1,20 @@
+# The repo-root .gitignore ignores results/, data/, weights/, *.pt, *.pth.
+# This release directory ships exactly those as deliverables, so un-ignore the
+# whole release subtree here (weights are additionally routed through Git LFS via
+# release/.gitattributes).
+!results/
+!results/**
+!data/
+!data/**
+!weights/
+!weights/**
+!*.pt
+!*.pth
+!*.npz
+
+# Local run artifacts an outsider may create — keep these ignored.
+runs/
+outputs/
+.venv/
+__pycache__/
+*.pyc
