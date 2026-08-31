@@ -1,0 +1,53 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Pytest
+.pytest_cache/
+
+# Data and checkpoints
+*.pth
+*.pt
+checkpoints/
+results/
+outputs/
+logs/
+# Feature caches and model weights (reproducible from scripts)
+weights/
+data/
+# Pre-packaged figures tarball (figures/ itself is kept)
+figures.tar.gz
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Raw dataset archives
+*.zip
+*.tar.gz
+
+# Manuscript
+*.pdf
+
+# Local assistant state
+.claude/

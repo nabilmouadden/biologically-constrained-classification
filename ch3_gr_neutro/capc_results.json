@@ -1,0 +1,606 @@
+{
+  "class_names": [
+    "Normal",
+    "Chromatin",
+    "Dohle",
+    "Hypergranulation",
+    "Hypersegmentation",
+    "Hypogranulation",
+    "Hyposegmentation"
+  ],
+  "concepts": [
+    "nuclear_lobulation_degree",
+    "nuclear_contour_irregularity",
+    "nucleus_to_cytoplasm_ratio",
+    "chromatin_condensation_level",
+    "chromatin_clumping_pattern",
+    "cytoplasmic_granule_density",
+    "granule_coarseness",
+    "cytoplasmic_texture_uniformity",
+    "cytoplasm_basophilia_level",
+    "cytoplasmic_inclusion_visibility",
+    "cytoplasmic_vacuolization_degree"
+  ],
+  "architectures": {
+    "B_kitchen_s42": {
+      "architecture": "B_kitchen_s42",
+      "metrics": {},
+      "best_distance_metric": "cosine",
+      "metric_summary": {
+        "euclidean": {
+          "grneutro_test_top1_acc": 0.2990867579908676,
+          "grneutro_test_w_f1_single_label": 0.27366820657272234,
+          "grneutro_test_w_f1_multilabel_tuned": 0.7076176556864926,
+          "tuned_taus": [
+            1.253469705581665,
+            0.935355544090271,
+            1.3649672269821167,
+            1.4511363506317139,
+            1.0903111696243286,
+            1.3269085884094238,
+            1.1998478174209595
+          ],
+          "grneutro_val_w_f1_multilabel_tuned": 0.710183139694695
+        },
+        "mahalanobis": {
+          "grneutro_test_top1_acc": 0.07990867579908675,
+          "grneutro_test_w_f1_single_label": 0.011825808257792968,
+          "grneutro_test_w_f1_multilabel_tuned": 0.5858839333890516,
+          "tuned_taus": [
+            51.050689697265625,
+            10.853262901306152,
+            63.07049560546875,
+            53.159610748291016,
+            31.690570831298828,
+            61.746212005615234,
+            51.051448822021484
+          ],
+          "grneutro_val_w_f1_multilabel_tuned": 0.5936450855407146
+        },
+        "cosine": {
+          "grneutro_test_top1_acc": 0.3470319634703196,
+          "grneutro_test_w_f1_single_label": 0.36678320608859766,
+          "grneutro_test_w_f1_multilabel_tuned": 0.729836646753787,
+          "tuned_taus": [
+            0.21402622759342194,
+            0.10615623742341995,
+            0.2134539932012558,
+            0.1008947566151619,
+            0.13497237861156464,
+            0.24725225567817688,
+            0.21672043204307556
+          ],
+          "grneutro_val_w_f1_multilabel_tuned": 0.7228918420928951
+        }
+      },
+      "mll23": {
+        "segmented_neutrophils": {
+          "n_cells": 7170,
+          "normal_recall_capc": 0.14616457461645746,
+          "top1_counts": {
+            "Normal": 1048,
+            "Chromatin": 1452,
+            "Dohle": 961,
+            "Hypergranulation": 580,
+            "Hypersegmentation": 2818,
+            "Hypogranulation": 285,
+            "Hyposegmentation": 26
+          }
+        },
+        "oov_cells": {
+          "n_cells": 33764,
+          "top1_counts": {
+            "Normal": 2595,
+            "Chromatin": 15469,
+            "Dohle": 8736,
+            "Hypergranulation": 1734,
+            "Hypersegmentation": 3555,
+            "Hypogranulation": 917,
+            "Hyposegmentation": 758
+          },
+          "any_abn_fraction": 0.9231429925364293,
+          "per_source": {
+            "basophil": {
+              "n": 616,
+              "top1_counts": {
+                "Normal": 1,
+                "Chromatin": 15,
+                "Dohle": 134,
+                "Hypergranulation": 465,
+                "Hypersegmentation": 1,
+                "Hypogranulation": 0,
+                "Hyposegmentation": 0
+              },
+              "any_abn_frac": 0.9983766233766234
+            },
+            "eosinophil": {
+              "n": 2448,
+              "top1_counts": {
+                "Normal": 103,
+                "Chromatin": 922,
+                "Dohle": 746,
+                "Hypergranulation": 425,
+                "Hypersegmentation": 101,
+                "Hypogranulation": 113,
+                "Hyposegmentation": 38
+              },
+              "any_abn_frac": 0.9579248366013072
+            },
+            "hairy_cell": {
+              "n": 3265,
+              "top1_counts": {
+                "Normal": 133,
+                "Chromatin": 1792,
+                "Dohle": 1192,
+                "Hypergranulation": 6,
+                "Hypersegmentation": 43,
+                "Hypogranulation": 47,
+                "Hyposegmentation": 52
+              },
+              "any_abn_frac": 0.9592649310872894
+            },
+            "lymphocyte": {
+              "n": 5532,
+              "top1_counts": {
+                "Normal": 180,
+                "Chromatin": 3742,
+                "Dohle": 876,
+                "Hypergranulation": 22,
+                "Hypersegmentation": 605,
+                "Hypogranulation": 52,
+                "Hyposegmentation": 55
+              },
+              "any_abn_frac": 0.9674620390455532
+            },
+            "lymphocyte_large_granular": {
+              "n": 1849,
+              "top1_counts": {
+                "Normal": 17,
+                "Chromatin": 1585,
+                "Dohle": 115,
+                "Hypergranulation": 2,
+                "Hypersegmentation": 78,
+                "Hypogranulation": 10,
+                "Hyposegmentation": 42
+              },
+              "any_abn_frac": 0.9908058409951325
+            },
+            "lymphocyte_neoplastic": {
+              "n": 180,
+              "top1_counts": {
+                "Normal": 21,
+                "Chromatin": 39,
+                "Dohle": 56,
+                "Hypergranulation": 0,
+                "Hypersegmentation": 52,
+                "Hypogranulation": 11,
+                "Hyposegmentation": 1
+              },
+              "any_abn_frac": 0.8833333333333333
+            },
+            "lymphocyte_reactive": {
+              "n": 33,
+              "top1_counts": {
+                "Normal": 2,
+                "Chromatin": 19,
+                "Dohle": 5,
+                "Hypergranulation": 0,
+                "Hypersegmentation": 4,
+                "Hypogranulation": 3,
+                "Hyposegmentation": 0
+              },
+              "any_abn_frac": 0.9393939393939394
+            },
+            "metamyelocyte": {
+              "n": 483,
+              "top1_counts": {
+                "Normal": 3,
+                "Chromatin": 162,
+                "Dohle": 80,
+                "Hypergranulation": 143,
+                "Hypersegmentation": 0,
+                "Hypogranulation": 1,
+                "Hyposegmentation": 94
+              },
+              "any_abn_frac": 0.9937888198757764
+            },
+            "monocyte": {
+              "n": 2510,
+              "top1_counts": {
+                "Normal": 22,
+                "Chromatin": 1107,
+                "Dohle": 1167,
+                "Hypergranulation": 2,
+                "Hypersegmentation": 78,
+                "Hypogranulation": 107,
+                "Hyposegmentation": 27
+              },
+              "any_abn_frac": 0.9912350597609562
+            },
+            "myeloblast": {
+              "n": 8606,
+              "top1_counts": {
+                "Normal": 1327,
+                "Chromatin": 2696,
+                "Dohle": 1583,
+                "Hypergranulation": 30,
+                "Hypersegmentation": 2397,
+                "Hypogranulation": 524,
+                "Hyposegmentation": 49
+              },
+              "any_abn_frac": 0.8458052521496631
+            },
+            "myelocyte": {
+              "n": 747,
+              "top1_counts": {
+                "Normal": 6,
+                "Chromatin": 92,
+                "Dohle": 284,
+                "Hypergranulation": 327,
+                "Hypersegmentation": 1,
+                "Hypogranulation": 0,
+                "Hyposegmentation": 37
+              },
+              "any_abn_frac": 0.9919678714859438
+            },
+            "normoblast": {
+              "n": 2071,
+              "top1_counts": {
+                "Normal": 287,
+                "Chromatin": 1355,
+                "Dohle": 257,
+                "Hypergranulation": 7,
+                "Hypersegmentation": 5,
+                "Hypogranulation": 2,
+                "Hyposegmentation": 158
+              },
+              "any_abn_frac": 0.8614196040560116
+            },
+            "plasma_cell": {
+              "n": 1658,
+              "top1_counts": {
+                "Normal": 30,
+                "Chromatin": 1081,
+                "Dohle": 442,
+                "Hypergranulation": 6,
+                "Hypersegmentation": 2,
+                "Hypogranulation": 7,
+                "Hyposegmentation": 90
+              },
+              "any_abn_frac": 0.9819059107358263
+            },
+            "promyelocyte": {
+              "n": 745,
+              "top1_counts": {
+                "Normal": 9,
+                "Chromatin": 34,
+                "Dohle": 497,
+                "Hypergranulation": 199,
+                "Hypersegmentation": 3,
+                "Hypogranulation": 2,
+                "Hyposegmentation": 1
+              },
+              "any_abn_frac": 0.9879194630872483
+            },
+            "promyelocyte_atypical": {
+              "n": 2033,
+              "top1_counts": {
+                "Normal": 412,
+                "Chromatin": 249,
+                "Dohle": 1069,
+                "Hypergranulation": 90,
+                "Hypersegmentation": 81,
+                "Hypogranulation": 38,
+                "Hyposegmentation": 94
+              },
+              "any_abn_frac": 0.7973438268568618
+            },
+            "smudge_cell": {
+              "n": 988,
+              "top1_counts": {
+                "Normal": 42,
+                "Chromatin": 579,
+                "Dohle": 233,
+                "Hypergranulation": 10,
+                "Hypersegmentation": 104,
+                "Hypogranulation": 0,
+                "Hyposegmentation": 20
+              },
+              "any_abn_frac": 0.9574898785425101
+            }
+          }
+        }
+      }
+    },
+    "cbm_joint_s42": {
+      "architecture": "cbm_joint_s42",
+      "metrics": {},
+      "best_distance_metric": "cosine",
+      "metric_summary": {
+        "euclidean": {
+          "grneutro_test_top1_acc": 0.3995433789954338,
+          "grneutro_test_w_f1_single_label": 0.36282181799295854,
+          "grneutro_test_w_f1_multilabel_tuned": 0.7162932413682275,
+          "tuned_taus": [
+            1.5663220882415771,
+            1.2380112409591675,
+            1.313920021057129,
+            1.2116445302963257,
+            0.9473638534545898,
+            1.055336594581604,
+            1.0316836833953857
+          ],
+          "grneutro_val_w_f1_multilabel_tuned": 0.713692422914208
+        },
+        "mahalanobis": {
+          "grneutro_test_top1_acc": 0.06164383561643835,
+          "grneutro_test_w_f1_single_label": 0.04223698588644535,
+          "grneutro_test_w_f1_multilabel_tuned": 0.4822004733113734,
+          "tuned_taus": [
+            10.680150032043457,
+            15.48380184173584,
+            10.232906341552734,
+            17.82732391357422,
+            9.931609153747559,
+            10.682737350463867,
+            11.494588851928711
+          ],
+          "grneutro_val_w_f1_multilabel_tuned": 0.5125659216276253
+        },
+        "cosine": {
+          "grneutro_test_top1_acc": 0.3881278538812785,
+          "grneutro_test_w_f1_single_label": 0.3542539590725909,
+          "grneutro_test_w_f1_multilabel_tuned": 0.7537416588531028,
+          "tuned_taus": [
+            0.2305641770362854,
+            0.21751344203948975,
+            0.29037368297576904,
+            0.12399226427078247,
+            0.10134491324424744,
+            0.24760174751281738,
+            0.2621486485004425
+          ],
+          "grneutro_val_w_f1_multilabel_tuned": 0.7252704149421957
+        }
+      },
+      "mll23": {
+        "segmented_neutrophils": {
+          "n_cells": 7170,
+          "normal_recall_capc": 0.22719665271966527,
+          "top1_counts": {
+            "Normal": 1629,
+            "Chromatin": 44,
+            "Dohle": 690,
+            "Hypergranulation": 596,
+            "Hypersegmentation": 2745,
+            "Hypogranulation": 797,
+            "Hyposegmentation": 669
+          }
+        },
+        "oov_cells": {
+          "n_cells": 33764,
+          "top1_counts": {
+            "Normal": 7797,
+            "Chromatin": 1433,
+            "Dohle": 4017,
+            "Hypergranulation": 1641,
+            "Hypersegmentation": 2052,
+            "Hypogranulation": 4091,
+            "Hyposegmentation": 12733
+          },
+          "any_abn_fraction": 0.7690735694822888,
+          "per_source": {
+            "basophil": {
+              "n": 616,
+              "top1_counts": {
+                "Normal": 287,
+                "Chromatin": 2,
+                "Dohle": 70,
+                "Hypergranulation": 236,
+                "Hypersegmentation": 7,
+                "Hypogranulation": 0,
+                "Hyposegmentation": 14
+              },
+              "any_abn_frac": 0.5340909090909091
+            },
+            "eosinophil": {
+              "n": 2448,
+              "top1_counts": {
+                "Normal": 907,
+                "Chromatin": 14,
+                "Dohle": 543,
+                "Hypergranulation": 178,
+                "Hypersegmentation": 178,
+                "Hypogranulation": 192,
+                "Hyposegmentation": 436
+              },
+              "any_abn_frac": 0.6294934640522876
+            },
+            "hairy_cell": {
+              "n": 3265,
+              "top1_counts": {
+                "Normal": 148,
+                "Chromatin": 449,
+                "Dohle": 10,
+                "Hypergranulation": 2,
+                "Hypersegmentation": 7,
+                "Hypogranulation": 150,
+                "Hyposegmentation": 2499
+              },
+              "any_abn_frac": 0.9546707503828484
+            },
+            "lymphocyte": {
+              "n": 5532,
+              "top1_counts": {
+                "Normal": 1106,
+                "Chromatin": 198,
+                "Dohle": 154,
+                "Hypergranulation": 40,
+                "Hypersegmentation": 112,
+                "Hypogranulation": 527,
+                "Hyposegmentation": 3395
+              },
+              "any_abn_frac": 0.8000723065798988
+            },
+            "lymphocyte_large_granular": {
+              "n": 1849,
+              "top1_counts": {
+                "Normal": 168,
+                "Chromatin": 5,
+                "Dohle": 30,
+                "Hypergranulation": 1,
+                "Hypersegmentation": 34,
+                "Hypogranulation": 241,
+                "Hyposegmentation": 1370
+              },
+              "any_abn_frac": 0.9091400757166036
+            },
+            "lymphocyte_neoplastic": {
+              "n": 180,
+              "top1_counts": {
+                "Normal": 44,
+                "Chromatin": 0,
+                "Dohle": 19,
+                "Hypergranulation": 0,
+                "Hypersegmentation": 12,
+                "Hypogranulation": 89,
+                "Hyposegmentation": 16
+              },
+              "any_abn_frac": 0.7555555555555555
+            },
+            "lymphocyte_reactive": {
+              "n": 33,
+              "top1_counts": {
+                "Normal": 5,
+                "Chromatin": 0,
+                "Dohle": 2,
+                "Hypergranulation": 0,
+                "Hypersegmentation": 2,
+                "Hypogranulation": 11,
+                "Hyposegmentation": 13
+              },
+              "any_abn_frac": 0.8484848484848485
+            },
+            "metamyelocyte": {
+              "n": 483,
+              "top1_counts": {
+                "Normal": 6,
+                "Chromatin": 9,
+                "Dohle": 16,
+                "Hypergranulation": 87,
+                "Hypersegmentation": 2,
+                "Hypogranulation": 8,
+                "Hyposegmentation": 355
+              },
+              "any_abn_frac": 0.9875776397515528
+            },
+            "monocyte": {
+              "n": 2510,
+              "top1_counts": {
+                "Normal": 352,
+                "Chromatin": 37,
+                "Dohle": 740,
+                "Hypergranulation": 12,
+                "Hypersegmentation": 268,
+                "Hypogranulation": 512,
+                "Hyposegmentation": 589
+              },
+              "any_abn_frac": 0.8597609561752988
+            },
+            "myeloblast": {
+              "n": 8606,
+              "top1_counts": {
+                "Normal": 2172,
+                "Chromatin": 89,
+                "Dohle": 1788,
+                "Hypergranulation": 72,
+                "Hypersegmentation": 904,
+                "Hypogranulation": 2087,
+                "Hyposegmentation": 1494
+              },
+              "any_abn_frac": 0.7476179409714153
+            },
+            "myelocyte": {
+              "n": 747,
+              "top1_counts": {
+                "Normal": 21,
+                "Chromatin": 32,
+                "Dohle": 116,
+                "Hypergranulation": 366,
+                "Hypersegmentation": 14,
+                "Hypogranulation": 12,
+                "Hyposegmentation": 186
+              },
+              "any_abn_frac": 0.9718875502008032
+            },
+            "normoblast": {
+              "n": 2071,
+              "top1_counts": {
+                "Normal": 1281,
+                "Chromatin": 155,
+                "Dohle": 23,
+                "Hypergranulation": 14,
+                "Hypersegmentation": 34,
+                "Hypogranulation": 112,
+                "Hyposegmentation": 452
+              },
+              "any_abn_frac": 0.3814582327378078
+            },
+            "plasma_cell": {
+              "n": 1658,
+              "top1_counts": {
+                "Normal": 114,
+                "Chromatin": 257,
+                "Dohle": 112,
+                "Hypergranulation": 68,
+                "Hypersegmentation": 1,
+                "Hypogranulation": 79,
+                "Hyposegmentation": 1027
+              },
+              "any_abn_frac": 0.9312424607961399
+            },
+            "promyelocyte": {
+              "n": 745,
+              "top1_counts": {
+                "Normal": 93,
+                "Chromatin": 32,
+                "Dohle": 136,
+                "Hypergranulation": 326,
+                "Hypersegmentation": 73,
+                "Hypogranulation": 20,
+                "Hyposegmentation": 65
+              },
+              "any_abn_frac": 0.8751677852348994
+            },
+            "promyelocyte_atypical": {
+              "n": 2033,
+              "top1_counts": {
+                "Normal": 761,
+                "Chromatin": 115,
+                "Dohle": 151,
+                "Hypergranulation": 231,
+                "Hypersegmentation": 378,
+                "Hypogranulation": 19,
+                "Hyposegmentation": 378
+              },
+              "any_abn_frac": 0.6256763403836695
+            },
+            "smudge_cell": {
+              "n": 988,
+              "top1_counts": {
+                "Normal": 332,
+                "Chromatin": 39,
+                "Dohle": 107,
+                "Hypergranulation": 8,
+                "Hypersegmentation": 26,
+                "Hypogranulation": 32,
+                "Hyposegmentation": 444
+              },
+              "any_abn_frac": 0.6639676113360324
+            }
+          }
+        }
+      }
+    }
+  }
+}

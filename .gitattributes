@@ -1,0 +1,2 @@
+release/weights/*.npz filter=lfs diff=lfs merge=lfs -text
+release/weights/*.pt filter=lfs diff=lfs merge=lfs -text

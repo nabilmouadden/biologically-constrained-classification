@@ -1,198 +1,243 @@
-# GR-Neutro concept-bottleneck reproducibility release
+# Biologically-Constrained Multi-Label Classification with Learnable Domain Knowledge
 
-Runnable code, released model weights, and per-abnormality accuracy for a
-DinoBloom-B backbone classifier (frozen + fine-tuned) and the concept
-architectures — Joint CBM, Pure-bottleneck CBM, Sequential CBM, Independent CBM,
-CEM (Concept Embedding Model), and PCBM-h (post-hoc / residual CBM) — on GR-Neutro
-(in-house Gustave Roussy peripheral-blood neutrophil corpus; 4,378 cells, 7
-abnormality classes, 10 downstream textbook morphology concepts).
+[![MIDL 2025](https://img.shields.io/badge/MIDL-2025-blue)](https://2025.midl.io/)
+[![License: CC BY 4.0](https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by/4.0/)
+[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![PyTorch](https://img.shields.io/badge/PyTorch-1.9%2B-ee4c2c.svg)](https://pytorch.org/)
 
-Weights are hosted on the Hugging Face Hub: **https://huggingface.co/nabimu9/gr-neutro-cbm-weights**
+Official implementation of **"Biologically-Constrained Multi-Label Classification with Learnable Domain Knowledge"**, accepted at **MIDL 2025** (Medical Imaging with Deep Learning).
+
+> **Authors:** Nabil Mouadden, Veronique Verge, Ahmadreza Arbab, Jean-Baptiste Micol, Elsa Bernard, Aline Renneville, Stergios Christodoulidis, Maria Vakalopoulou
+>
+> **Affiliations:** MICS, CentraleSupelec, Paris-Saclay University | IHU PRISM, Gustave Roussy
+
+## Abstract
+
+Although recent foundation models trained in a self-supervised setting have shown promise in cellular image analysis, they often produce biologically impossible predictions when handling multiple concurrent abnormalities. We present a novel and modular approach to enforce biological constraints in multi-label medical imaging classification. Building on the DinoBloom hematological foundation model, our method combines **learnable constraint matrices** with **adaptive thresholding**, effectively preventing contradictory predictions while maintaining high sensitivity. Extensive experiments on three datasets demonstrate significant improvements over different foundation models and the state-of-the-art methods.
+
+## Architecture
 
 ```
-<repo root>/
-├── code/
-│   ├── models.py                    # DinoBloomBackbone, ConceptAdapter, ConstraintModule, JointModel
-│   ├── residual_cbm.py              # PCBM-h + CEM + pure-bottleneck heads on cached features
-│   ├── train.py                     # end-to-end training (backbone + concept arch)
-│   ├── data.py                      # GR-Neutro loading + stratified-multilabel split + transforms
-│   ├── finetune_7class.py           # single-label 7-class fine-tune of DinoBloom-B
-│   ├── cache_ft_features.py         # fine-tune DinoBloom-B (last-N) and dump CLS feature bank
-│   ├── make_manifest.py             # annotations.csv -> cell_manifest_full_extended.json
-│   ├── morphometry_concepts_v2.py   # deterministic label-free morphometry (10 concepts)
-│   ├── infer.py                     # single-image inference -> class + concepts
-│   ├── concept_config_gr_neutro.json
-│   └── concepts_10.json
-├── examples/                        # synthetic fixtures for an offline wiring smoke test
-├── weights/                         # README + download script (weights pulled from HF)
-├── results/                         # per-abnormality accuracy tables
-├── PREPROCESSING.md                 # preprocessing run order
-└── README.md
+Input Image
+    │
+    ▼
+┌──────────────┐
+│  DinoBloom-S │
+│  Foundation  │
+│  Model       │
+└──────┬───────┘
+       │ features (384-dim)
+       ▼
+┌──────────────────────────────────┐
+│     Constraint Module            │
+│                                  │
+│  ┌─────────────┐  ┌──────────┐  │
+│  │  Feature     │  │  Prior   │  │
+│  │  Projection  │  │  Matrix  │  │
+│  │  + Attention │  │  C       │  │
+│  └──────┬──────┘  └────┬─────┘  │
+│         │              │         │
+│         ▼              ▼         │
+│  ┌─────────────────────────┐    │
+│  │  Learnable Constraint   │    │
+│  │  Matrix R (data-driven) │    │
+│  └────────────┬────────────┘    │
+│               │                  │
+│  ┌────────────▼────────────┐    │
+│  │  MC Dropout Classifier  │    │
+│  │  + Uncertainty Est.     │    │
+│  └────────────┬────────────┘    │
+│               │                  │
+│  ┌────────────▼────────────┐    │
+│  │  Adaptive Thresholding  │    │
+│  │  T(p, u) = α·t + β·u   │    │
+│  │           + δ·(1-p)     │    │
+│  └─────────────────────────┘    │
+└──────────────────────────────────┘
+       │
+       ▼
+  Multi-label predictions
+  + Uncertainty estimates
+  + Constraint matrix
 ```
 
----
+## Key Contributions
 
-## Released weights and their accuracy
+1. **Learnable Constraint Satisfaction Module** — Automatically discovers and enforces biological relationships between cell abnormalities while maintaining end-to-end differentiability.
 
-### End-to-end checkpoints — DinoBloom-B last-6 fine-tuned, seed 42
+2. **Adaptive Thresholding** — A per-class thresholding mechanism that dynamically adjusts to varying degrees of abnormality manifestation, incorporating both prediction confidence and Monte Carlo uncertainty.
 
-| Weight (`*.pt`) | Architecture | Test W-F1 | Macro-F1 | Subset acc. | Multi-seed mean W-F1 |
-|---|---|--:|--:|--:|--:|
-| `joint_cbm_dinobloomB_ft_s42.pt` | **Joint CBM** (separate classifier ∥ concept adapter + constraint) | **0.912** | 0.861 | 0.865 | 0.887 ± 0.012 |
-| `pure_bottleneck_cbm_dinobloomB_ft_s42.pt` | **Pure-bottleneck CBM** (transparent; class only through concepts, λ=2) | **0.909** | 0.862 | 0.847 | ≈ 0.88 |
-| `backbone_baseline_dinobloomB_ft_s42.pt` | **No-concept backbone baseline** (fine-tuned classifier) | **0.907** | 0.865 | 0.868 | 0.884 |
-| `cbm_sequential_dinobloomB_ft_s42.pt` | **Sequential CBM** | **0.873** | 0.804 | 0.756 | — |
-| `cbm_independent_dinobloomB_ft_s42.pt` | **Independent CBM** | **0.772** | 0.748 | 0.585 | — |
+3. **Biologically-Grounded Prior Constraints** — Domain knowledge encoded as prior constraint matrices (e.g., mutual exclusivity between Normal and all abnormalities) that guide learning.
 
-**Per-abnormality F1 (seed 42):**
+## Supported Datasets
 
-| Class (n) | Joint CBM | Pure-bottleneck | Backbone baseline | Sequential | Independent |
-|---|--:|--:|--:|--:|--:|
-| Normal (199) | 0.987 | 0.980 | 0.982 | 0.962 | 0.791 |
-| Hypogranulation (108) | 0.903 | 0.910 | 0.897 | 0.888 | 0.824 |
-| Hyposegmentation (67) | 0.855 | 0.826 | 0.821 | 0.846 | 0.786 |
-| Chromatin (35) | 0.694 | 0.750 | 0.719 | 0.429 | 0.437 |
-| Hypersegmentation (19) | 0.895 | 0.919 | 0.919 | 0.919 | 0.872 |
-| Döhle (19) | 0.848 | 0.757 | 0.848 | 0.743 | 0.684 |
-| Hypergranulation (16) | 0.842 | 0.889 | 0.865 | 0.842 | 0.842 |
+| Dataset | Classes | Description |
+|---------|---------|-------------|
+| **GR-Neutro** | 7 | Neutrophil abnormalities (Normal, Chromatin, Dohle, Hypergranulation, Hypersegmentation, Hypogranulation, Hyposegmentation) |
+| **AML Matek** | 15 | Acute myeloid leukemia cell types |
+| **BMC** | 21 | Bone marrow cell morphology |
 
-### Feature-bank heads — frozen DinoBloom-B, 6-seed mean W-F1 [95% CI]
+## Repository layout (post-MIDL additions)
 
-Reproduced from the released feature banks (`*_features.npz`) via `residual_cbm.py`.
+[`aml_matek/`](./aml_matek/) contains concept-bottleneck experiments on AML
+Matek. It introduces an 18-morphological-concept intermediate representation
+derived from Hoffbrand/Briggs, with per-concept mutex and co-occurrence
+constraints and a conformal-coverage evaluation. Reproducible end to end; see
+`aml_matek/README.md`.
 
-| Method | W-F1 | Macro-F1 | Interpretable? |
-|---|--:|--:|---|
-| `backbone_mlp` (reference head) | 0.8495 [0.844, 0.855] | 0.771 | no |
-| `cem` (Concept Embedding Model) | 0.8471 [0.838, 0.856] | 0.768 | yes |
-| `pcbmh` (residual CBM, r=10) | 0.8297 [0.817, 0.842] | 0.735 | yes |
-| `pcbmh_highrank` (r=64) | 0.8318 [0.828, 0.836] | 0.740 | yes |
-| `pure_bottleneck` (fully transparent) | 0.7984 [0.788, 0.808] | 0.698 | yes |
+The intended entry point for anyone extending the project is
+[`docs/onboarding.md`](./docs/onboarding.md). The methodology guide for
+designing concept vocabularies and constraint matrices is at
+[`docs/concept_design.md`](./docs/concept_design.md).
 
-### Head checkpoints (`heads/` on HF) — seed 42 W-F1, frozen / fine-tuned
-
-Standalone concept-head checkpoints hosted under `heads/` on the HF repo. Files are
-named `heads/<method>_<frozen|ft_last4>_s42_head.pt`.
-
-| Method | Frozen W-F1 | Fine-tuned (last-4) W-F1 |
-|---|--:|--:|
-| CEM | 0.844 | 0.936 |
-| `backbone_mlp` | 0.832 | 0.935 |
-| PCBM-h | 0.823 | 0.928 |
-| `pure_bottleneck` | 0.781 | 0.890 |
-
-### Feature banks
-
-| File (`*.npz`) | What | Shape |
-|---|---|---|
-| `dinobloom_b_frozen_features.npz` | Frozen DinoBloom-B CLS features, all 4,378 cells | `features` (4378, 768) |
-| `dinobloom_b_ft_last4_features.npz` | Fine-tuned (last-4) DinoBloom-B CLS bank, seed 0 | `features` (4378, 768) |
-
----
-
-## Dependencies
-
-- Python 3.10+
-- PyTorch + torchvision (CUDA for training; CPU works for single-image inference)
-- timm, numpy, scikit-learn, pandas, scipy, scikit-image, Pillow, huggingface_hub, matplotlib
+## Installation
 
 ```bash
-python -m venv .venv && source .venv/bin/activate
+git clone https://github.com/nabilmouadden/biologically-constrained-classification.git
+cd biologically-constrained-classification
+
+# Create virtual environment
+python -m venv .venv
+source .venv/bin/activate  # Linux/macOS
+# .venv\Scripts\activate   # Windows
+
+# Install dependencies
 pip install -r requirements.txt
 ```
 
-CPU-only inference (no CUDA):
+## Quick Start
+
+### 1. Generate Constraint Matrices
+
+Generate and visualize the biological constraint matrices encoding domain knowledge:
 
 ```bash
-pip install torch --index-url https://download.pytorch.org/whl/cpu
+python examples/generate_constraints.py --dataset gr_neutro --output_dir ./configs --visualize
 ```
 
-The frozen DinoBloom-B backbone is the public checkpoint
-`hf-hub:1aurent/vit_base_patch14_224.dinobloom`, fetched automatically by `timm`
-on first build. To warm the HF cache on a networked node before an offline run:
+Available datasets: `gr_neutro`, `aml_matek`, `bmc`, `all`
+
+### 2. Train
 
 ```bash
-python -c "import timm; timm.create_model('hf-hub:1aurent/vit_base_patch14_224.dinobloom', pretrained=True, img_size=224)"
+python examples/train.py --config configs/gr_neutro.yaml --output_dir ./checkpoints
 ```
 
----
+Key configuration options in `configs/gr_neutro.yaml`:
 
-## Getting the weights
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `model.backbone` | `dinobloom-s` | Backbone architecture |
+| `model.dropout_rate` | `0.5` | MC Dropout rate for uncertainty |
+| `model.base_threshold` | `0.5` | Base adaptive threshold |
+| `model.constraint_source` | `empirical_hybrid` | `prior` = hand-crafted biological matrix; `empirical_hybrid` = training-data lift scores with biological mutex pairs enforced |
+| `training.mc_samples_train` | `5` | MC samples during training |
+| `training.mc_samples_val` | `20` | MC samples during validation |
+| `training.freeze_backbone` | `false` | When `false`, partially fine-tune the backbone (see `unfreeze_last_n_blocks`) |
+| `training.unfreeze_last_n_blocks` | `6` | Number of trailing transformer blocks made trainable |
+| `training.pos_weight` | `auto` | Per-class BCE positive weight: `clamp(neg / pos, max=pos_weight_clamp)`. Set to `null` to disable |
+| `training.pos_weight_clamp` | `50` | Upper bound on the auto pos_weight |
+| `training.loss.lambda_con` | `0.01` | Constraint-matching loss weight (aligns $R$ with $C$) |
+| `training.loss.lambda_viol` | `0.1` | Violation-penalty weight (mutex co-activation at prediction level) |
+| `training.loss.lambda_unc` | `0.0` | Uncertainty loss weight |
+| `training.loss.lambda_entropy` | `0.01` | Entropy regularization weight |
+
+> **Note — defaults vs the MIDL 2025 paper.** The methodology described above
+> (architecture, losses, adaptive thresholding) is identical to the paper.
+> The ships-with default configuration in `configs/gr_neutro.yaml` reflects
+> a refinement of the training recipe found after publication: partial
+> backbone fine-tuning, a data-driven constraint matrix, per-class
+> `pos_weight` BCE for the heavy class imbalance, and a smaller `lambda_con`.
+> To reproduce the paper's original recipe instead, set
+> `freeze_backbone: true`, `constraint_source: prior`, `pos_weight: null`,
+> `epochs: 50`, `weight_decay: 0.01`, `mc_samples_val: 50`,
+> `loss.lambda_con: 0.1`, `loss.lambda_unc: 0.1`.
+
+### 3. Inference
 
 ```bash
-bash weights/download_weights.sh                      # pulls everything into ./weights/
-# or:
-hf download nabimu9/gr-neutro-cbm-weights --local-dir weights
-# or in Python:
-python -c "from huggingface_hub import snapshot_download; snapshot_download('nabimu9/gr-neutro-cbm-weights', local_dir='weights')"
+python examples/inference.py \
+    --config configs/gr_neutro.yaml \
+    --checkpoint ./checkpoints/best_model.pth \
+    --output_dir ./results \
+    --mc_samples 50
 ```
 
-See `weights/README.md` for what each file is and how to load it.
+Outputs include:
+- Per-class metrics (accuracy, F1, AUC-ROC, uncertainty)
+- Calibration curves and ECE/MCE metrics
+- Constraint matrix and threshold visualizations
+- High-uncertainty misclassification analysis
 
----
+## Project Structure
 
-## Preprocessing
-
-See `PREPROCESSING.md` for the full run order (morphometry → manifest → feature bank →
-`residual_cbm.py`). The synthetic fixtures in `examples/` provide an offline wiring
-smoke test.
-
----
-
-## Training
-
-Feature-bank concept heads (CEM, PCBM-h, pure-bottleneck):
-
-```bash
-python code/residual_cbm.py \
-    --features weights/dinobloom_b_ft_last4_features.npz \
-    --manifest ./runs/cell_manifest_full_extended.json \
-    --morpho   ./runs/morphometry/morphometry_concepts.csv \
-    --out      runs/residual_cbm/results.json
+```
+├── configs/
+│   └── gr_neutro.yaml          # MIDL 2025 config for GR-Neutro
+├── examples/                   # MIDL 2025 entry-point scripts
+│   ├── train.py
+│   ├── inference.py
+│   └── generate_constraints.py
+├── src/                        # MIDL 2025 implementation
+│   ├── models/                 # constraint_module, adaptive_threshold, losses, priors
+│   ├── data/datasets.py
+│   └── utils/                  # uncertainty, visualization
+├── aml_matek/                  # Concept-bottleneck experiments on AML Matek
+│   ├── concept_config.json     # 18 concepts, class→concept soft matrix, mutex/cooccur list
+│   ├── cache_features.py       # One-shot feature extraction (DinoBloom/DINOv2/ResNet)
+│   ├── models.py               # ConceptAdapter + ConstraintModule + JointModel
+│   ├── train.py                # Supports --baseline/joint/frozen × constrained/unconstrained/posw/λ
+│   ├── evaluate.py             # Concept F1, violation rate, probe, conformal coverage
+│   ├── make_figures.py         # 11 paper figures + LaTeX main table
+│   ├── diag_band.py            # Diagnosis script for the band_nucleus F1=0 failure
+│   ├── summary_all.py          # Cross-config numerical summary
+│   └── slurm/                  # 5 SLURM batch scripts
+├── docs/                       # Methodology and onboarding docs
+│   ├── onboarding.md           # Connects MIDL 2025 and aml_matek/
+│   └── concept_design.md       # How to design concept vocabularies and constraint matrices
+├── figures/                    # Generated figures from the AML Matek experiments
+└── requirements.txt
 ```
 
-End-to-end backbone + concept architecture:
+## Loss Function
 
-```bash
-# Joint CBM (separate CLS classifier + concept adapter):
-python code/train.py --tag joint_run --mode joint \
-    --backbone dinobloom_b --unfreeze_last_n 6 \
-    --data_csv ./data/gr_neutro/annotations.csv --data_root ./data/gr_neutro \
-    --config code/concept_config_gr_neutro.json --seed 42
+The total loss combines five components:
 
-# Pure-bottleneck CBM (class flows only through concepts):
-python code/train.py --tag cbm_run --mode cbm --lambda_concept_loss 2.0 \
-    --backbone dinobloom_b --unfreeze_last_n 6 \
-    --data_csv ./data/gr_neutro/annotations.csv --data_root ./data/gr_neutro \
-    --config code/concept_config_gr_neutro.json --seed 42
+$$
+\mathcal{L}_{total} = \mathcal{L}_{BCE} + \lambda_{con}\,\mathcal{L}_{con} + \lambda_{viol}\,\mathcal{L}_{viol} + \lambda_{unc}\,\mathcal{L}_{unc} + \lambda_{ent}\,\mathcal{L}_{ent}
+$$
 
-# No-concept backbone baseline: add --baseline.
+- **BCE Loss** — binary cross-entropy, summed over $K$ classes and averaged over $N$ samples.
+
+- **Constraint Loss** — aligns the learned relationship matrix $R$ with the prior $C$:
+
+$$
+\mathcal{L}_{con} = \lVert R R^\top - C \rVert_F^{\,2} + \alpha\,\lVert R \rVert_1
+$$
+
+- **Violation Loss** — direct co-activation penalty over the mutually-exclusive class pairs of $C$, applied to the classifier's MC-averaged sigmoid outputs $p$. Its gradient flows into the classifier, so mutex constraints are enforced at the prediction level:
+
+$$
+\mathcal{L}_{viol} = \frac{1}{|B|} \sum_{i \in B} \sum_{(a,b) \in \mathrm{mutex}(C)} p_{i,a}\,p_{i,b}
+$$
+
+- **Uncertainty Loss** — KL divergence between predicted and target distributions plus a hinge term penalizing predictions whose MC-dropout uncertainty exceeds a threshold.
+
+- **Entropy Regularization** — binary entropy of the elements of $R$ (rescaled to $[0,1]$), normalized by $K^2$ and maximized so $R$ does not collapse to deterministic values.
+
+## Citation
+
+If you use this code in your research, please cite:
+
+```bibtex
+@inproceedings{mouadden2025biologically,
+  title={Biologically-Constrained Multi-Label Classification with Learnable Domain Knowledge},
+  author={Mouadden, Nabil and Verge, Veronique and Arbab, Ahmadreza and Micol, Jean-Baptiste and Bernard, Elsa and Renneville, Aline and Christodoulidis, Stergios and Vakalopoulou, Maria},
+  booktitle={Medical Imaging with Deep Learning (MIDL)},
+  year={2025}
+}
 ```
 
-Each run writes `outputs/<tag>/model.pt` (same format as the released checkpoints) +
-`predictions.pt` + `summary.json`.
+## License
 
----
-
-## Inference
-
-```bash
-bash weights/download_weights.sh           # if not done yet
-cd code
-python infer.py \
-    --weights ../weights/joint_cbm_dinobloomB_ft_s42.pt \
-    --image   /path/to/one_cell.png
-```
-
-`infer.py` loads any released `*.pt`, predicts the abnormality class, prints the
-learned concept activations, and independently runs the deterministic morphometry to
-print the 10 measured textbook-concept values. The architecture is read from each
-checkpoint's stored `args`, so the same command works for all of them.
-
----
-
-## Data note
-
-GR-Neutro is an in-house Gustave Roussy peripheral-blood neutrophil corpus and is not
-redistributed here. The code expects an `annotations.csv` (header
-`filename,path,Normal,Chromatin,Dohle,Hypergranulation,Hypersegmentation,Hypogranulation,Hyposegmentation`,
-one-hot) and an image root. DinoBloom-B's SSL pretraining did not include GR-Neutro.
+This work is licensed under a [Creative Commons Attribution 4.0 International License](https://creativecommons.org/licenses/by/4.0/).

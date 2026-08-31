@@ -1,6 +1,0 @@
-filename,path,Normal,Chromatin,Dohle,Hypergranulation,Hypersegmentation,Hypogranulation,Hyposegmentation
-synthetic_cell_0001.png,Normal/synthetic_cell_0001.png,1,0,0,0,0,0,0
-synthetic_cell_0002.png,Hypogranulation/synthetic_cell_0002.png,0,0,0,0,0,1,0
-synthetic_cell_0003.png,Chromatin/synthetic_cell_0003.png,0,1,0,0,0,0,0
-synthetic_cell_0004.png,Dohle/synthetic_cell_0004.png,0,0,1,0,0,0,0
-synthetic_cell_0005.png,Hypersegmentation/synthetic_cell_0005.png,0,0,0,0,1,0,0

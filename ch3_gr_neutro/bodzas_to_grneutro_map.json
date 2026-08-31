@@ -1,0 +1,92 @@
+{
+  "_doc": "Bodzas-2023 -> GR-Neutro class mapping. Bodzas WBC dataset (Bodzas, Kodytek, Zidek, Scientific Data 10:466, 2023; figshare DOI 10.6084/m9.figshare.c.6612970) has 9 cell types from peripheral blood smears. Only 'neutrophil_segment' maps cleanly to a GR-Neutro Normal target. 'neutrophil_band' is physiologically banded; same caveat as MLL-23 (target=Hyposegmentation, audit_required=true). All non-neutrophil source classes are OOV w.r.t. the GR-Neutro 7-class neutrophil-morphology label space.",
+  "_grneutro_classes": [
+    "Normal",
+    "Chromatin",
+    "Dohle",
+    "Hypergranulation",
+    "Hypersegmentation",
+    "Hypogranulation",
+    "Hyposegmentation"
+  ],
+  "_bodzas_class_list_published": [
+    "Neutrophil segment",
+    "Neutrophil band",
+    "Eosinophil",
+    "Basophil",
+    "Lymphocyte",
+    "Monocyte",
+    "Nucleated red blood cell (normoblast)",
+    "Myeloblast",
+    "Lymphoblast"
+  ],
+  "_directly_evaluable": [
+    "Normal (via neutrophil_segment)"
+  ],
+  "_abnormalities_partially_evaluable": [
+    "Hyposegmentation (via neutrophil_band, audit_required=true; same convention as MLL-23 map)"
+  ],
+  "_abnormalities_not_evaluable_directly": [
+    "Chromatin",
+    "Dohle",
+    "Hypergranulation",
+    "Hypersegmentation",
+    "Hypogranulation"
+  ],
+  "mappings": {
+    "neutrophil_segment": {
+      "target": "Normal",
+      "lineage": "neutrophil",
+      "audit_required": false,
+      "notes": "Mature segmented PMN; direct match to GR-Neutro Normal. Equivalent to MLL-23 neutrophil_segmented."
+    },
+    "neutrophil_band": {
+      "target": "Hyposegmentation",
+      "lineage": "neutrophil",
+      "audit_required": true,
+      "notes": "Band cells are physiologically hyposegmented (<3 lobes). Same audit flag as MLL-23 neutrophil_band; lab may relabel as Normal."
+    },
+    "eosinophil": {
+      "target": "OOV",
+      "lineage": "other_myeloid",
+      "audit_required": false,
+      "notes": "Eosinophil; granulocyte but NOT neutrophil. Rejection pool."
+    },
+    "basophil": {
+      "target": "OOV",
+      "lineage": "other_myeloid",
+      "audit_required": false,
+      "notes": "Basophil; granulocyte but NOT neutrophil. Rejection pool."
+    },
+    "lymphocyte": {
+      "target": "OOV",
+      "lineage": "lymphoid",
+      "audit_required": false,
+      "notes": "Mature lymphocyte; rejection pool."
+    },
+    "monocyte": {
+      "target": "OOV",
+      "lineage": "other_myeloid",
+      "audit_required": false,
+      "notes": "Monocyte lineage; rejection pool."
+    },
+    "nucleated_red_blood_cell": {
+      "target": "OOV",
+      "lineage": "erythroid",
+      "audit_required": false,
+      "notes": "Normoblast / nucleated RBC; erythroid lineage; rejection pool."
+    },
+    "myeloblast": {
+      "target": "OOV",
+      "lineage": "other_myeloid",
+      "audit_required": false,
+      "notes": "Blast; not a mature neutrophil. Rejection pool."
+    },
+    "lymphoblast": {
+      "target": "OOV",
+      "lineage": "lymphoid",
+      "audit_required": false,
+      "notes": "Lymphoid blast; not a mature neutrophil. Rejection pool."
+    }
+  }
+}

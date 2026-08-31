@@ -1,0 +1,115 @@
+# Configuration file for GR-Neutro dataset
+
+dataset:
+  name: gr_neutro
+  root_dir: path/to/gr_neutro_dataset
+  class_names:
+    - Normal
+    - Chromatin
+    - Dohle
+    - Hypergranulation
+    - Hypersegmentation
+    - Hypogranulation
+    - Hyposegmentation
+  transform:
+    train:
+      - type: RandomResizedCrop
+        size: 224
+        scale: [0.8, 1.0]
+      - type: RandomHorizontalFlip
+        p: 0.5
+      - type: RandomVerticalFlip
+        p: 0.5
+      - type: ColorJitter
+        brightness: 0.1
+        contrast: 0.1
+        saturation: 0.1
+        hue: 0.05
+      - type: RandomRotation
+        degrees: 10
+      - type: ToTensor
+      - type: Normalize
+        mean: [0.485, 0.456, 0.406]
+        std: [0.229, 0.224, 0.225]
+    val:
+      - type: Resize
+        size: 256
+      - type: CenterCrop
+        size: 224
+      - type: ToTensor
+      - type: Normalize
+        mean: [0.485, 0.456, 0.406]
+        std: [0.229, 0.224, 0.225]
+    test:
+      - type: Resize
+        size: 256
+      - type: CenterCrop
+        size: 224
+      - type: ToTensor
+      - type: Normalize
+        mean: [0.485, 0.456, 0.406]
+        std: [0.229, 0.224, 0.225]
+
+model:
+  backbone: dinobloom-s
+  num_classes: 7
+  dropout_rate: 0.5
+  base_threshold: 0.5
+  # Data-driven constraint matrix (empirical co-occurrences + biological priors
+  # for impossible pairs). Use 'prior' for the hand-crafted matrix only.
+  constraint_source: empirical_hybrid
+
+training:
+  batch_size: 32
+  epochs: 40
+  num_workers: 4
+  backbone_lr: 1e-5
+  constraint_lr: 1e-4
+  classifier_lr: 1e-4
+  threshold_lr: 5e-5
+  weight_decay: 1e-4
+
+  # Monte Carlo samples
+  mc_samples_train: 5
+  mc_samples_val: 20
+
+  # Early stopping
+  early_stopping_patience: 10
+  early_stopping_metric: 'f1_weighted'
+
+  # Partial fine-tuning: unfreeze the last 6 transformer blocks and the
+  # final normalization layer. Set freeze_backbone: true to keep DinoBloom
+  # fully frozen (faster but lower rare-class F1).
+  freeze_backbone: false
+  unfreeze_layers: [blocks, norm]
+  unfreeze_last_n_blocks: 6
+
+  # Per-class BCE pos_weight = clamp(neg / pos, max=pos_weight_clamp) to
+  # rebalance the heavily imbalanced rare abnormalities. Leave unset or use
+  # `pos_weight: null` to disable.
+  pos_weight: auto
+  pos_weight_clamp: 50
+
+  # Learning rate scheduler
+  scheduler:
+    type: cosine
+    min_lr: 1e-6
+
+  # Checkpoint and visualization intervals
+  checkpoint_interval: 5
+  visualization_interval: 10
+
+  # Loss function hyperparameters
+  loss:
+    lambda_con: 0.01
+    lambda_viol: 0.1
+    lambda_unc: 0.0
+    lambda_entropy: 0.01
+    alpha: 0.01
+    beta: 0.1
+    uncertainty_threshold: 0.2
+
+inference:
+  mc_samples: 50
+  batch_size: 32
+  num_workers: 4
